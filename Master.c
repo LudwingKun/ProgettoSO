@@ -12,8 +12,8 @@
 #include <time.h>
 #include <sys/msg.h>
 #include "macro.h"
-#include "util.h"
-
+#include "Util.h"
+#include "SemaforiUtil.h"
 
 void seedRandom() {
     struct timespec ts;
@@ -22,9 +22,10 @@ void seedRandom() {
         perror("clock_gettime");
         exit(1);
     }
-    seed = ((unsigned long)ts.tv_sec * 1000000000) + ts.tv_nsec;
-    srand(ts.tv_nsec+seed);
+    seed = ts.tv_nsec;
+    srand(seed);
 }
+
 
 /**Funzione per prendere un numero random per il Numero Atomico degli atomi (quando padre li crea) */
 
@@ -43,7 +44,6 @@ int main() {
 	int atomi_pids[20];
 	char *argv[] = {NULL}, *envp[] = {NULL}; 
 	int status;
-
 	/*************************************** CREAZIONE STRUTTURE *****************************************************/
 	int semid, shmid, msgid, semReadId;
 
@@ -53,7 +53,7 @@ int main() {
         exit(EXIT_FAILURE);
     }
 
-    /* creazione SEMAFORO per scrittura */
+    /* creazione SEMAFORO per scrittura e lettura */
     semid = semget(SEMWRITEKEY, 1, IPC_CREAT | 0666);
     if (semid == -1) {
         fprintf(stderr, "%s: %d. Errore in semget #%03d: %s\n", __FILE__, __LINE__, errno, strerror(errno));
@@ -65,7 +65,7 @@ int main() {
         fprintf(stderr, "%s: %d. Errore in semctl #%03d: %s\n", __FILE__, __LINE__, errno, strerror(errno));
         exit(EXIT_FAILURE);
     }
-
+    /*todo: questo serve ? secondo me no:)*/
     /* Creazione del semaforo per la lettura */
     semReadId = semget(SEMREADKEY, 1, IPC_CREAT | 0666);
     if (semReadId == -1) {
@@ -91,8 +91,8 @@ int main() {
 
 	/*************************************** FINE CREAZIONE STRUTTURE *****************************************************/
 
-
-
+    /*inizializzo il semaforo*/
+    sem_init(semid);
 	for (i=0;i<N_ATOMI_INIT;i++) {
 		atomi_pids[i] = fork();
         switch (atomi_pids[i]) {
@@ -100,9 +100,14 @@ int main() {
                 perror("fork");
                 exit(EXIT_FAILURE);
             case 0:
+                sem_down(semid); /*decremento del semaforo*/
+
                 printf("Atomo creato!\n");
                 printf("Atomo_pid: %d\n", getpid());
                 printf("padre atomo: %d\n", getppid());
+
+                printf("Atomo %d waiting for 0 before fire execve \n", getpid());
+                sem_wait_for_zero(semid);
                 execve("atomo", argv, envp);
                 if(execve("atomo", argv, envp) == -1) {
                 	perror("execve");
@@ -134,15 +139,20 @@ int main() {
     for (i=0;i<N_ATOMI_INIT;i++){
         printf("Atomo %d: %d\n", i, atomi_pids[i]);
     }
-
-    sleep(10);
-
+    /**todo: serve ancora?**/
+   /* sleep(10);
+*/
     pid_attivatore = fork();
     switch (pid_attivatore) {
         case -1:
             perror("error fork attivatore");
             exit(EXIT_FAILURE);
         case 0:
+            sem_down(semid);
+            printf("Attivatore con pid %d \n", getpid());
+
+            printf("Attivatore waiting for zero...");
+            sem_wait_for_zero(semid);
             execve("attivatore", argv, envp);
             if(execve("attivatore", argv, envp) == -1) {
                 perror("execve");
@@ -153,7 +163,7 @@ int main() {
             break;
     }
 
-    sleep(10);
+    /*sleep(10);*/
 
     pid_alimentazione = fork();
     switch (pid_alimentazione) {
@@ -161,6 +171,10 @@ int main() {
             perror("error fork alimentazione");
             exit(EXIT_FAILURE);
         case 0:
+            sem_down(semid);
+            printf("Alimentazione con pid %d", getpid());
+
+            printf("Alimentazione waiting for zero");
             execve("alimentazione", argv, envp);
             if(execve("alimentazione", argv, envp) == -1) {
                 perror("execve");
@@ -171,10 +185,12 @@ int main() {
             break;
     }
 
-    sleep(10);
+    /*sleep(10);*/
+    sem_down(semid);
+    sem_wait_for_zero(semid);
     printf("START!\n");
-    sleep(10);
 
+    sleep(10);
     /* Rimozione dei semafori e della memoria condivisa */
     semctl(semid, 0, IPC_RMID);
     semctl(semReadId, 0, IPC_RMID);

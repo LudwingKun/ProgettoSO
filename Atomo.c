@@ -3,7 +3,7 @@
 #include <unistd.h>
 #include <sys/msg.h>
 #include "macro.h"
-#include "util.h"
+#include "Util.h"
 
 int main() {
     printf("Atomo di pid: %d\n\n", getpid());
@@ -17,7 +17,7 @@ int main() {
 
     printf("msgid sono in atomo: %d\n",msgid);
     if (msgrcv(msgid, &myMessage, sizeof(myMessage), 1, 0) == -1) {
-        perror("msgrcv");
+        perror("msgrcv yo");
         exit(EXIT_FAILURE);
     }
 

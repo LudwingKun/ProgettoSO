@@ -5,7 +5,7 @@
 #include <time.h>
 #include <sys/msg.h>
 #include "macro.h"
-#include "util.h"
+#include "Util.h"
 
 
 
@@ -17,7 +17,7 @@ int main() {
 
     msgid = msgget(MSGKEY, 0);
     myMessage.msg_type = 1;
-    myMessage.msg_text[0] = "scissione";
+    myMessage.msg_text[0] = (char) "scissione";
     printf("msgid sono in ATTIVATORE: %d\n",msgid);
 
 

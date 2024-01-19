@@ -1,4 +1,6 @@
 #define N_ATOMI_INIT 3
+#define N_ATTIVATORE 1
+#define N_ALIMENTAZIONE 1
 #define ENERGY_DEMAND
 #define N_ATOM_MAX 10
 #define MIN_N_ATOMICO
