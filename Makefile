@@ -1,4 +1,4 @@
-CFLAGS = -std=c89 -pedantic -lrt
+CFLAGS = -std=c89 -pedantic
 
 all: master atomo attivatore alimentazione
 

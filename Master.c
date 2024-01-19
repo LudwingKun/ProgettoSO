@@ -10,7 +10,7 @@
 #include <sys/shm.h>
 #include <sys/wait.h>
 #include <time.h>
-#include <sys/msg.h>
+
 #include "macro.h"
 #include "util.h"
 
@@ -103,8 +103,8 @@ int main() {
                 printf("Atomo creato!\n");
                 printf("Atomo_pid: %d\n", getpid());
                 printf("padre atomo: %d\n", getppid());
-                execve("atomo", argv, envp);
-                if(execve("atomo", argv, envp) == -1) {
+                execve("/home/ubuntu/Desktop/SO/atomo", argv, envp);
+                if(execve("/home/ubuntu/Desktop/SO/atomo", argv, envp) == -1) {
                 	perror("execve");
                 	exit(EXIT_FAILURE);
                 }
@@ -143,8 +143,8 @@ int main() {
             perror("error fork attivatore");
             exit(EXIT_FAILURE);
         case 0:
-            execve("attivatore", argv, envp);
-            if(execve("attivatore", argv, envp) == -1) {
+            execve("/home/ubuntu/Desktop/SO/attivatore", argv, envp);
+            if(execve("/home/ubuntu/Desktop/SO/attivatore", argv, envp) == -1) {
                 perror("execve");
                	exit(EXIT_FAILURE);
             }
@@ -161,8 +161,8 @@ int main() {
             perror("error fork alimentazione");
             exit(EXIT_FAILURE);
         case 0:
-            execve("alimentazione", argv, envp);
-            if(execve("alimentazione", argv, envp) == -1) {
+            execve("/home/ubuntu/Desktop/SO/alimentazione", argv, envp);
+            if(execve("/home/ubuntu/Desktop/SO/alimentazione", argv, envp) == -1) {
                 perror("execve");
                	exit(EXIT_FAILURE);
             }
