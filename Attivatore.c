@@ -7,6 +7,38 @@
 #include "util.h"
 
 
+
+int main() {
+    printf("Attivatore_pid: %d\n", getpid());
+    int msgid;
+    struct message myMessage;
+    int current_second = 0;
+
+    msgid = msgget(MSGKEY, 0);
+    myMessage.msg_type = 1;
+    myMessage.msg_text[0] = "scissione";
+    printf("msgid sono in ATTIVATORE: %d\n",msgid);
+
+
+    while(current_second <= SIM_DURATION) {
+        if (current_second == STEP_ATTIVATORE) {
+            msgsnd(msgid, &myMessage, sizeof(myMessage), 0);
+            printf("mesaggio inviato!\n\n");
+        }
+        current_second++;
+    }
+
+
+
+
+
+}
+
+
+
+
+/*Capire questione del tempo, tutto qui commentato:*/
+/*
 int get_nano_sec() {
 	struct timespec ts;
 	if(clock_gettime(CLOCK_REALTIME, &ts) == -1) {
@@ -16,14 +48,28 @@ int get_nano_sec() {
 	return ts.tv_nsec;
 }
 
-/*void activate_atoms(int msgid) {
+int get_sec() {
+	struct timespec ts;
+	if(clock_gettime(CLOCK_REALTIME, &ts) == -1) {
+		perror("clock_gettime");
+		exit(1);
+	}
+	return ts.tv_sec;
+}
+
+int get_simulated_time() {
+	static int simulated_time = 0;
+	return simulated_time;
+}
+
+void activate_atoms(int msgid) {
 	int activation_time = get_nano_sec();
 
 	if (get_nano_sec() - activation_time == STEP_ATTIVATORE) {
 		send_message(msgid);
 		activation_time = get_nano_sec();
 	}
-}*/
+}
 
 int main() {
 	printf("Attivatore creato!\n");
@@ -31,22 +77,62 @@ int main() {
     printf("padre attivatore: %d\n", getppid());
 
 
-    int activation_time = get_nano_sec();
-    int i;
-    int msgid;
+	int simulated_time_step = 1;
+	int activation_time = 5;
+	int messsage_atom = 0;
+	int msgid;
     struct message myMessage;
+    int simulated_time;
 
-    msgid = msgget(MSGKEY, 0);
+	msgid = msgget(MSGKEY, 0);
     myMessage.msg_type = 1;
     myMessage.msg_text = "scissione";
 
+    printf("Get simulated time: %d\n", get_simulated_time());
 
-	if (get_nano_sec() - activation_time == STEP_ATTIVATORE) {
+	while (get_simulated_time() < SIM_DURATION) {
+		if (STEP_ATTIVATORE >= get_simulated_time()) {
+			msgsnd(msgid, &myMessage, sizeof(myMessage), 0);
+			printf("entra qui?");
+			messsage_atom = 1;
+		}
+		simulated_time += simulated_time_step;
+
+		struct timespec ts_sleep;
+		ts_sleep.tv_sec = simulated_time_step;
+		ts_sleep.tv_nsec = 0;
+
+		nanosleep(&ts_sleep, NULL);
+
+	}
+
+
+
+    int i;
+
+
+    struct timespec current_time;
+    clock_gettime(CLOCK_REALTIME, &current_time);
+    printf("time: %d\n", clock_gettime(CLOCK_REALTIME, &current_time));
+
+    double elapsed_time = difftime(current_time.tv_sec, TIME);
+    printf("elapsed_time: %f\n\n", elapsed_time);
+
+
+    printf("STEP_ATTIVATORE: %d\n", STEP_ATTIVATORE);
+    printf("activation_time: %d\n", &activation_time);
+
+    if(elapsed_time == STEP_ATTIVATORE) {
+    	printf("entra qui?");
+    }
+
+	if ( == STEP_ATTIVATORE) {
 		for (i = 0; i < N_ATOMI_INIT; i++) {
 			if (msgsnd(msgid, &myMessage, sizeof(myMessage), 0)) {
 				activation_time = get_nano_sec();
+				printf("entra qui?");
 			}
 		}
 	}
-    
-}
+
+} */
