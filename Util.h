@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+#include "macro.h"
 
 struct atomo {
 	int numero_atomico;

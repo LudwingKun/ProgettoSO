@@ -1,3 +1,6 @@
+#ifndef CONFIG_H
+#define CONFIG_H
+
 #define N_ATOMI_INIT 3
 #define N_ATTIVATORE 1
 #define N_ALIMENTAZIONE 1
@@ -15,4 +18,4 @@
 #define SEMREADKEY 5778
 #define MSGKEY 9101
 
-#define TIME 0
+#endif /* CONFIG_H */

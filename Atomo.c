@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/msg.h>
-#include "macro.h"
+/*#include "macro.h"*/
 #include "Util.h"
 
 int main() {
@@ -22,24 +22,24 @@ int main() {
     }
 
 
-    /*while(current_second <= SIM_DURATION) {
+    while(current_second <= SIM_DURATION) {
         printf("cioa\n\n");
         if (current_second == STEP_ATTIVATORE) {
-            msgrcv(msgid, &myMessage, sizeof(myMessage), 1, 0); /*1 sarebbe il tipo del messaggio!
+            msgrcv(msgid, &myMessage, sizeof(myMessage), 1, 0); /*1 sarebbe il tipo del messaggio */!
             printf("messaggio ricevuto: %s\n\n", myMessage.msg_text);
         }
         current_second++;
-    } */
+    }
+}
 
 
 
 
     /*msgid = msgget(MSGKEY, 0);
-    /*myMessage.msg_type = 1;
+    myMessage.msg_type = 1;
     myMessage.msg_text = "scissione";
-	msgrcv(msgid, &myMessage, sizeof(myMessage), 1, 0); /*1 sarebbe il tipo del messaggio!
+	msgrcv(msgid, &myMessage, sizeof(myMessage), 1, 0);1 sarebbe il tipo del messaggio!
 
 	printf("messaggio ricevuto: %s\n\n", myMessage.msg_text); */
 
 
-}

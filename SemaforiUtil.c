@@ -1,4 +1,5 @@
 #include "SemaforiUtil.h"
+
 void sem_init(int sem_id){
     if (semctl(sem_id, 0, SETVAL, N_ALIMENTAZIONE + N_ATOMI_INIT + N_ATTIVATORE +1) == -1) {
         perror("semctl");

@@ -1,5 +1,3 @@
-#define _POSIX_C_SOURCE 200809L
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -11,7 +9,7 @@
 #include <sys/wait.h>
 #include <time.h>
 #include <sys/msg.h>
-#include "macro.h"
+#include <signal.h>
 #include "Util.h"
 #include "SemaforiUtil.h"
 
@@ -41,9 +39,10 @@ int getRandomNumber(int lowerLimit, int upperLimit) { /*questa va chiamata con l
 int main() {
 	int i;
 	int pid, pid_attivatore, pid_alimentazione;
-	int atomi_pids[20];
+	int atomi_pids[N_ATOMI_INIT];
 	char *argv[] = {NULL}, *envp[] = {NULL}; 
 	int status;
+    int current_second;
 	/*************************************** CREAZIONE STRUTTURE *****************************************************/
 	int semid, shmid, msgid, semReadId;
 
@@ -190,7 +189,16 @@ int main() {
     sem_wait_for_zero(semid);
     printf("START!\n");
 
+    for(current_second = 0; current_second <= SIM_DURATION; current_second++) {
+        printf("current_second: %d\n", current_second);
+    }
     sleep(10);
+    /*kill processi atomo*/
+    /*for(i = 0; i < N_ATOMI_INIT; i++) {
+        printf("atomi_pids[%d] = %d\n", i, atomi_pids[i]);
+        kill(atomi_pids[i], SIGKILL);
+    }*/
+
     /* Rimozione dei semafori e della memoria condivisa */
     semctl(semid, 0, IPC_RMID);
     semctl(semReadId, 0, IPC_RMID);
