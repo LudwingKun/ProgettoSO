@@ -11,9 +11,7 @@
 #include <time.h>
 #include <sys/msg.h>
 #include <signal.h>
-#include <pngconf.h>
-#include <bits/time.h>
-#include <bits/types/struct_timespec.h>
+
 #include "Util.h"
 #include "SemaforiUtil.h"
 void seedRandom() {
@@ -62,25 +60,6 @@ int main() {
         exit(EXIT_FAILURE);
     }
 
-    /* imposto valore del semaforo a 1 scrittura */
-    if (semctl(semid, 0, SETVAL, 1) == -1) {
-        fprintf(stderr, "%s: %d. Errore in semctl #%03d: %s\n", __FILE__, __LINE__, errno, strerror(errno));
-        exit(EXIT_FAILURE);
-    }
-    /*todo: questo serve ? secondo me no:)*/
-    /* Creazione del semaforo per la lettura */
-    semReadId = semget(SEMREADKEY, 1, IPC_CREAT | 0666);
-    if (semReadId == -1) {
-        fprintf(stderr, "%s: %d. Errore in semget #%03d: %s\n", __FILE__, __LINE__, errno, strerror(errno));
-        exit(EXIT_FAILURE);
-    }
-
-    /* imposto valore del semaforo a 0 lettura */
-    if (semctl(semReadId, 0, SETVAL, 0) == -1) {
-        fprintf(stderr, "%s: %d. Errore in semctl #%03d: %s\n", __FILE__, __LINE__, errno, strerror(errno));
-        exit(EXIT_FAILURE);
-    }
-
 
     /* Creazione message queue */
     msgid = msgget(MSGKEY, IPC_CREAT | 0666);
@@ -120,20 +99,6 @@ int main() {
             	atomo.numero_atomico = getRandomNumber(1, N_ATOM_MAX);
             	atomo.pid = atomi_pids[i];
             	printf("Atomo con pid %d ha questo numero atomico: %d\n\n", atomo.pid, atomo.numero_atomico);
-                /*Codice del processo padre non so se è vero. controlla!*/
-                /*atomi_pids[i] = waitpid(pid, &status, 0);
-
-                if(atomi_pids[i] == -1) {
-                	perror("waitpid");
-                	exit(EXIT_FAILURE);
-                }
-
-                if(WIFEXITED(status)) {
-                	printf("Il processo figlio con PID %d e' terminato con stato %d\n", pid, WEXITSTATUS(status));
-
-                } else {
-                	printf("Il processo figlio con PID %d non e' terminato correttamente", pid);
-                }*/
                 break;
         }
     }
@@ -175,8 +140,8 @@ int main() {
         case 0:
             sem_down(semid);
             printf("Alimentazione con pid %d", getpid());
-
             printf("Alimentazione waiting for zero");
+            sem_wait_for_zero(semid);
             execve("alimentazione", argv, envp);
             if(execve("alimentazione", argv, envp) == -1) {
                 perror("execve");

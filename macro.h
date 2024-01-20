@@ -19,3 +19,7 @@
 #define MSGKEY 9101
 
 #endif /* CONFIG_H */
+
+
+/*TODO: modificare questo file in un file.txt, fopen nel master che legge a tempo di esecuzione i parametri
+ * */
