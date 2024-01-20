@@ -1,3 +1,4 @@
+#define _POSIX_C_SOURCE 200809L
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -10,9 +11,11 @@
 #include <time.h>
 #include <sys/msg.h>
 #include <signal.h>
+#include <pngconf.h>
+#include <bits/time.h>
+#include <bits/types/struct_timespec.h>
 #include "Util.h"
 #include "SemaforiUtil.h"
-
 void seedRandom() {
     struct timespec ts;
     unsigned long seed;

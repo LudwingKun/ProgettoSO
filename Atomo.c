@@ -15,11 +15,11 @@ int main() {
 
     msgid = msgget(MSGKEY, 0);
 
-    printf("msgid sono in atomo: %d\n",msgid);
+/*    printf("msgid sono in atomo: %d\n",msgid);
     if (msgrcv(msgid, &myMessage, sizeof(myMessage), 1, 0) == -1) {
         perror("msgrcv yo");
         exit(EXIT_FAILURE);
-    }
+    }*/
 
 
     while(current_second <= SIM_DURATION) {
