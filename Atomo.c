@@ -6,12 +6,12 @@
 #include "Util.h"
 
 int main() {
-    printf("Atomo di pid: %d\n\n", getpid());
-
-    /*Primo atomo che trova prova a leggere dalla coda:*/
     int msgid;
     struct message myMessage;
     int current_second = 0;
+    printf("Atomo di pid: %d\n\n", getpid());
+
+    /*Primo atomo che trova prova a leggere dalla coda:*/
 
     msgid = msgget(MSGKEY, 0);
 
@@ -26,8 +26,6 @@ int main() {
 
     /*Prendere da memoria condivisa?*/
     printf("numero atomico dell'atomo %d e' ==== %d\n", atomo.pid, atomo.numero_atomico);
-
-
     while(current_second <= SIM_DURATION) {
         printf("cioa\n\n");
         if (current_second == STEP_ATTIVATORE) {
