@@ -1,4 +1,5 @@
 #define _POSIX_C_SOURCE 200809L
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -14,39 +15,19 @@
 
 #include "lib/Util.h"
 #include "lib/macro.h"
-#include "lib/SemaforiUtil.h"
+#include "lib/GeneralUtils.h"
 
 
-void seedRandom() {
-    struct timespec ts;
-    unsigned long seed;
-    if (clock_gettime(CLOCK_REALTIME, &ts) == -1) {
-        perror("clock_gettime");
-        exit(1);
-    }
-    seed = ts.tv_nsec;
-    srand(seed);
-}
-
-
-/**Funzione per prendere un numero random per il Numero Atomico degli atomi (quando padre li crea) */
-
-int getRandomNumber(int lowerLimit, int upperLimit) { /*questa va chiamata con lowerLimit = 1 e upperLimit = N_ATOM_MAX */
-    int randomNumber;
-    seedRandom();
-    randomNumber= rand() % (upperLimit - lowerLimit +1) + lowerLimit;
-
-    return randomNumber;
-}
+random_btw(int min, int max) { return rand() % (max - min + 1) + min; }
 
 
 int main() {
     /**************************DICHIARAZIONI DI VARIABILI QUI !!*************************************************/
-	int i;
-	int pid_attivatore, pid_alimentazione;
+    int i;
+    int pid_attivatore, pid_alimentazione;
     int N_ATOMI_INIT, ENERGY_DEMAND, MIN_N_ATOMICO, N_NUOVI_ATOMI, N_ATTIVATORE, N_ALIMENTAZIONE, N_ATOM_MAX, STEP_ALIMENTAZIONE, ENERGY_EXPLODE_THRESHOLD, SIM_DURATION, STEP_ATTIVATORE;
     int atomi_pids[20]; /*array di pid degli atomi che dovrà esssere istanziato con malloc perchè variano i numeri degli atomi creati!*/
-	/*char *args1[]; passare come argv i parametri nell'execve
+    /*char *args1[]; passare come argv i parametri nell'execve
     char *args2[] = {};
     char *args3[] = {}; */
     int current_second;
@@ -71,7 +52,10 @@ int main() {
         perror("Errore nell'apertura del file");
         exit(EXIT_FAILURE);
     }
-    if (fscanf(file,"N_ATOMI_INIT=%d\nN_ATTIVATORE=%d\nN_ALIMENTAZIONE=%d\nENERGY_DEMAND=%d\nN_ATOM_MAX=%d\nMIN_N_ATOMICO=%d\nSTEP_ATTIVATORE=%d\nSTEP_ALIMENTAZIONE=%d\nN_NUOVI_ATOMI=%d\nSIM_DURATION=%d\nENERGY_EXPLODE_THRESHOLD=%d\n", &N_ATOMI_INIT, &N_ATTIVATORE, &N_ALIMENTAZIONE, &ENERGY_DEMAND, &N_ATOM_MAX, &MIN_N_ATOMICO, &STEP_ATTIVATORE, &STEP_ALIMENTAZIONE, &N_NUOVI_ATOMI, &SIM_DURATION, &ENERGY_EXPLODE_THRESHOLD) != 11) {
+    if (fscanf(file,
+               "N_ATOMI_INIT=%d\nN_ATTIVATORE=%d\nN_ALIMENTAZIONE=%d\nENERGY_DEMAND=%d\nN_ATOM_MAX=%d\nMIN_N_ATOMICO=%d\nSTEP_ATTIVATORE=%d\nSTEP_ALIMENTAZIONE=%d\nN_NUOVI_ATOMI=%d\nSIM_DURATION=%d\nENERGY_EXPLODE_THRESHOLD=%d\n",
+               &N_ATOMI_INIT, &N_ATTIVATORE, &N_ALIMENTAZIONE, &ENERGY_DEMAND, &N_ATOM_MAX, &MIN_N_ATOMICO,
+               &STEP_ATTIVATORE, &STEP_ALIMENTAZIONE, &N_NUOVI_ATOMI, &SIM_DURATION, &ENERGY_EXPLODE_THRESHOLD) != 11) {
         fprintf(stderr, "Errore nella lettura dei parametri di configurazione\n");
         exit(EXIT_FAILURE);
     }
@@ -89,22 +73,22 @@ int main() {
 
     /*************************************** CREAZIONE STRUTTURE *****************************************************/
 
-	shmid = shmget(SHMKEY, sizeof(int) * (N_ATOMI_INIT + N_NUOVI_ATOMI), IPC_CREAT | 0666);
-	if (shmid == -1) {
+    shmid = shmget(SHMKEY, sizeof(int) * (N_ATOMI_INIT + N_NUOVI_ATOMI), IPC_CREAT | 0666);
+    if (shmid == -1) {
         fprintf(stderr, "%s: %d. Errore in shmget #%03d: %s\n", __FILE__, __LINE__, errno, strerror(errno));
         exit(EXIT_FAILURE);
     }
 
     /* Creazione MEMORIA CONDIVISA per le statistiche ogni secondo, metto struttura DUMP! */
-    shmidReport = shmget(SHMKEYREPORT, sizeof(struct Dump) , IPC_CREAT | 0666);
+    shmidReport = shmget(SHMKEYREPORT, sizeof(struct Dump), IPC_CREAT | 0666);
     if (shmidReport == -1) {
         fprintf(stderr, "%s: %d. Errore in shmget #%03d: %s\n", __FILE__, __LINE__, errno, strerror(errno));
         exit(EXIT_FAILURE);
     }
 
-    shared_dump = (struct Dump *)shmat(shmidReport, NULL, 0);
-    if ((struct Dump *)shared_dump == (struct Dump *)(-1)) {
-        perror("shmat");
+    shared_dump = (struct Dump *) shmat(shmidReport, NULL, 0);
+    if ((struct Dump *) shared_dump == (struct Dump *) (-1)) {
+        perror("shmat fail");
         exit(EXIT_FAILURE);
     }
 
@@ -122,12 +106,12 @@ int main() {
         fprintf(stderr, "%s: %d. Errore in msgget #%03d: %s\n", __FILE__, __LINE__, errno, strerror(errno));
         exit(EXIT_FAILURE);
     }
-    printf("msgid sono in MASTER: %d\n",msgid);
+    printf("msgid sono in MASTER: %d\n", msgid);
 
 
 
-	/*************************************** FINE CREAZIONE STRUTTURE *****************************************************/
-	/* Proviamo a trasformare STEP_ATTIVATORE E SIM_DURATION! da int a char per passarli! */
+    /*************************************** FINE CREAZIONE STRUTTURE *****************************************************/
+    /* Proviamo a trasformare STEP_ATTIVATORE E SIM_DURATION! da int a char per passarli! */
 
 
     /* Utilizza sprintf per convertire l'intero in una stringa */
@@ -141,7 +125,6 @@ int main() {
     char *args1[] = {"atomo", buffer, buffer2, NULL};
     char *args2[] = {"attivatore", buffer, buffer2, NULL};
     char *args3[] = {"alimentazione", buffer2, buffer3, buffer4, buffer5, NULL};
-
 
 
     /*args1[0] = "atomo";
@@ -160,40 +143,38 @@ int main() {
     args3[3] = buffer4;
     args3[4] = buffer5;
     args3[5] = NULL; */
-
+    srand(time(NULL));
 
     /*inizializzo il semaforo*/
-    sem_init(semid, N_ATTIVATORE + N_ATOMI_INIT + N_ALIMENTAZIONE +1);
+    sem_init(semid, N_ATTIVATORE + N_ATOMI_INIT + N_ALIMENTAZIONE + 1);
 
-	for (i=0;i<N_ATOMI_INIT;i++) {
-		atomi_pids[i] = fork();
+    for (i = 0; i < N_ATOMI_INIT; i++) {
+        atomi_pids[i] = fork();
         switch (atomi_pids[i]) {
             case -1:
-                perror("fork");
+                perror("fork fail for atom");
                 exit(EXIT_FAILURE);
             case 0:
                 sem_down(semid); /*decremento del semaforo*/
 
-                printf("Atomo creato!\n");
-                printf("Atomo_pid: %d\n", getpid());
-                printf("padre atomo: %d\n", getppid());
+                printf("Atomo creato!\n pid: %d \n padre: %d \n", getpid(), getppid());
 
                 printf("Atomo %d waiting for 0 before fire execve \n", getpid());
                 sem_wait_for_zero(semid);
-                if(execve("bin/atomo", args1, NULL) == -1) {
-                	perror("execve");
-                	exit(EXIT_FAILURE);
+                if (execve("bin/atomo", args1, NULL) == -1) {
+                    perror("execve");
+                    exit(EXIT_FAILURE);
                 }
                 exit(EXIT_FAILURE);
             default:
-            	atomo.numero_atomico = getRandomNumber(1, N_ATOM_MAX);
-            	atomo.pid = atomi_pids[i];
-            	printf("Atomo con pid %d ha questo numero atomico: %d\n\n", atomo.pid, atomo.numero_atomico);
+                atomo.numero_atomico = random_btw(1, N_ATOM_MAX);
+                atomo.pid = atomi_pids[i];
+                printf("Atomo con pid %d ha questo numero atomico: %d\n\n", atomo.pid, atomo.numero_atomico);
                 break;
         }
     }
 
-    for (i=0;i<N_ATOMI_INIT;i++){
+    for (i = 0; i < N_ATOMI_INIT; i++) {
         printf("Atomo %d: %d\n", i, atomi_pids[i]);
     }
     pid_attivatore = fork();
@@ -207,9 +188,9 @@ int main() {
 
             printf("Attivatore waiting for zero...");
             sem_wait_for_zero(semid);
-            if(execve("bin/attivatore", args2, NULL) == -1) {
+            if (execve("bin/attivatore", args2, NULL) == -1) {
                 perror("execve");
-               	exit(EXIT_FAILURE);
+                exit(EXIT_FAILURE);
             }
             exit(EXIT_FAILURE);
         default:
@@ -229,9 +210,9 @@ int main() {
             printf("Alimentazione waiting for zero");
             sem_wait_for_zero(semid);
 
-            if(execve("bin/alimentazione", args3, NULL) == -1) {
+            if (execve("bin/alimentazione", args3, NULL) == -1) {
                 perror("execve");
-               	exit(EXIT_FAILURE);
+                exit(EXIT_FAILURE);
             }
             exit(EXIT_FAILURE);
         default:
@@ -244,7 +225,7 @@ int main() {
 
     printf("START!\n");
 
-    for(current_second = 0; current_second <= SIM_DURATION; current_second++) {
+    for (current_second = 0; current_second <= SIM_DURATION; current_second++) {
         /*kill processi atomo*/
         /*for(i = 0; i < N_ATOMI_INIT; i++) {
             printf("atomi_pids[%d] = %d\n", i, atomi_pids[i]);
@@ -287,7 +268,6 @@ int main() {
     printf("END!\n");
 
     return 0;
-            
-           
+
 
 } 

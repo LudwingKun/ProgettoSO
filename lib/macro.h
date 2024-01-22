@@ -19,5 +19,3 @@
 #define SHMKEYREPORT 0301
 
 
-/*TODO: modificare questo file in un file.txt, fopen nel master che legge a tempo di esecuzione i parametri
- * */

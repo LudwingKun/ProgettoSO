@@ -6,7 +6,7 @@ clean:
 	rm -f *.o bin/master bin/atomo bin/attivatore bin/alimentazione *~
 
 master: Master.c Makefile
-	gcc $(CFLAGS) Master.c lib/SemaforiUtil.c  -o bin/master
+	gcc $(CFLAGS) Master.c lib/GeneralUtils.c  -o bin/master
 
 atomo: Atomo.c Makefile
 	gcc $(CFLAGS) Atomo.c -o bin/atomo
