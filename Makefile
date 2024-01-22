@@ -1,21 +1,23 @@
-CFLAGS = -std=c89 -pedantic
+CFLAGS = -std=c89 -pedantic -Wall
 
 all: master atomo attivatore alimentazione
 
 clean:
-	rm -f *.o master atomo attivatore alimentazione *~
+	rm -f *.o bin/master bin/atomo bin/attivatore bin/alimentazione *~
 
 master: Master.c Makefile
-	gcc $(CFLAGS) Master.c SemaforiUtil.c -o master
+	gcc $(CFLAGS) Master.c lib/SemaforiUtil.c  -o bin/master
 
 atomo: Atomo.c Makefile
-	gcc $(CFLAGS) Atomo.c -o atomo
+	gcc $(CFLAGS) Atomo.c -o bin/atomo
 
 attivatore: Attivatore.c Makefile
-	gcc $(CFLAGS) Attivatore.c -o attivatore
+	gcc $(CFLAGS) Attivatore.c -o bin/attivatore
 
 alimentazione: Alimentazione.c Makefile
-	gcc $(CFLAGS) Alimentazione.c -o alimentazione
+	gcc $(CFLAGS) Alimentazione.c -o bin/alimentazione
 
 run:  all
-	./master
+	./bin/master
+start:
+	./bin/master

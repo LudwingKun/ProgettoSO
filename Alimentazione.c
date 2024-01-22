@@ -1,9 +1,12 @@
+#define _POSIX_C_SOURCE 200809L
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include "Util.h"
-
-
+#include <bits/types/struct_timespec.h>
+#include <time.h>
+#include <pngconf.h>
+#include <bits/time.h>
+#include "lib/Util.h"
 
 void seedRandom() {
     struct timespec ts;
@@ -26,6 +29,7 @@ int getRandomNumber(int lowerLimit, int upperLimit) { /*questa va chiamata con l
 
     return randomNumber;
 }
+
 
 int main(int argc, char *argv[]) {
     int i;

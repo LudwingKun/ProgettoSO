@@ -6,8 +6,8 @@
 #include <sys/msg.h>
 #include <sys/errno.h>
 #include <string.h>
-#include "macro.h"
-#include "Util.h"
+#include "lib/macro.h"
+#include "lib/Util.h"
 
 
 
@@ -23,7 +23,7 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    // Interpretazione dei parametri
+
     STEP_ATTIVATORE = atoi(argv[1]);
     SIM_DURATION = atoi(argv[2]);
 
