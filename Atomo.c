@@ -26,14 +26,6 @@ int main(int argc, char *argv[]) {
     STEP_ATTIVATORE = atoi(argv[1]);
     SIM_DURATION = atoi(argv[2]);
 
-int main() {
-    int msgid;
-    struct message myMessage;
-    int current_second = 0;
-    printf("Atomo di pid: %d\n\n", getpid());
-
-    /*Primo atomo che trova prova a leggere dalla coda:*/
-
     msgid = msgget(MSGKEY, 0);
     if (msgid == -1) {
         fprintf(stderr, "%s: %d. Errore in msgget #%03d: %s\n", __FILE__, __LINE__, errno, strerror(errno));
