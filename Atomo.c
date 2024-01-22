@@ -16,14 +16,18 @@ int main(int argc, char *argv[]) {
     struct message myMessage;
     int current_second = 0;
     int STEP_ATTIVATORE, SIM_DURATION;
+    int numero_atomico;
 
-    if (argc != 3) {
+    if (argc != 4) {
         fprintf(stderr, "Error, wrong number of argument for atomo\n");
         exit(EXIT_FAILURE);
     }
 
     STEP_ATTIVATORE = atoi(argv[1]);
     SIM_DURATION = atoi(argv[2]);
+    numero_atomico = atoi(argv[3]);
+    printf("numero atomico dell'atomo %d e' ==== %d\n", getpid(), numero_atomico);
+
 
     msgid = msgget(MSGKEY, 0);
     if (msgid == -1) {
@@ -38,7 +42,6 @@ int main(int argc, char *argv[]) {
     /*Prendere da memoria condivisa?*/
     printf("numero atomico dell'atomo %d e' ==== %d\n", atomo.pid, atomo.numero_atomico);
     while(current_second <= SIM_DURATION) {
-        printf("cioa\n\n");
         if (current_second == STEP_ATTIVATORE) {
             msgrcv(msgid, &myMessage, sizeof(myMessage), 1, 0); /*1 sarebbe il tipo del messaggio */
             printf("messaggio ricevuto: %s\n\n", myMessage.msg_text);

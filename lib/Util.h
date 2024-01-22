@@ -32,6 +32,5 @@ int getRandomNumber(int lowerLimit, int upperLimit);
 
 void seedRandom();
 
-int get_nano_sec();
-int get_nano_sec();
+
 

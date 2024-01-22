@@ -2,10 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <bits/types/struct_timespec.h>
 #include <time.h>
-#include <pngconf.h>
-#include <bits/time.h>
 #include "lib/Util.h"
 
 void seedRandom() {
@@ -70,9 +67,6 @@ int main(int argc, char *argv[]) {
                         }*/
                         exit(EXIT_FAILURE);
                     default:
-                        atomo.numero_atomico = getRandomNumber(1, N_ATOM_MAX);
-                        atomo.pid = atomi_alimentatore[i];
-                        printf("Atomo con pid %d ha questo numero atomico: %d\n\n", atomo.pid, atomo.numero_atomico);
                         break;
                 }
             }

@@ -34,6 +34,8 @@ int main() {
     int semid, shmid, msgid, shmidReport;
     struct Dump dump = {0, 0, 0, 0, 0};
     struct Dump *shared_dump;
+    int numero_atomico;
+
 
     char buffer[10];
     char buffer2[10];
@@ -122,7 +124,7 @@ int main() {
     sprintf(buffer5, "%d", N_ATOM_MAX);
 
     /*printf("Il numero intero come stringa: %s\n", buffer);*/
-    char *args1[] = {"atomo", buffer, buffer2, NULL};
+    char *args1[] = {"atomo", buffer, buffer2, buffer,NULL};
     char *args2[] = {"attivatore", buffer, buffer2, NULL};
     char *args3[] = {"alimentazione", buffer2, buffer3, buffer4, buffer5, NULL};
 
@@ -149,6 +151,9 @@ int main() {
     sem_init(semid, N_ATTIVATORE + N_ATOMI_INIT + N_ALIMENTAZIONE + 1);
 
     for (i = 0; i < N_ATOMI_INIT; i++) {
+        numero_atomico = random_btw(1, N_ATOM_MAX);
+        sprintf(args1[3], "%d", numero_atomico);
+        printf("numero_atomico: %d\n", numero_atomico);
         atomi_pids[i] = fork();
         switch (atomi_pids[i]) {
             case -1:
@@ -156,9 +161,7 @@ int main() {
                 exit(EXIT_FAILURE);
             case 0:
                 sem_down(semid); /*decremento del semaforo*/
-
-                printf("Atomo creato!\n pid: %d \n padre: %d \n", getpid(), getppid());
-
+                printf("Atomo creato!\npid: %d \npadre: %d \n", getpid(), getppid());
                 printf("Atomo %d waiting for 0 before fire execve \n", getpid());
                 sem_wait_for_zero(semid);
                 if (execve("bin/atomo", args1, NULL) == -1) {
@@ -167,9 +170,8 @@ int main() {
                 }
                 exit(EXIT_FAILURE);
             default:
-                atomo.numero_atomico = random_btw(1, N_ATOM_MAX);
+                /* PIPE -> atomo si mette in ascolto e attende il numero atomico che gli invia il padre */
                 atomo.pid = atomi_pids[i];
-                printf("Atomo con pid %d ha questo numero atomico: %d\n\n", atomo.pid, atomo.numero_atomico);
                 break;
         }
     }
