@@ -4,33 +4,47 @@
 #include <unistd.h>
 #include <time.h>
 #include <sys/msg.h>
+#include <sys/errno.h>
+#include <string.h>
 #include "macro.h"
 #include "Util.h"
 
 
 
-int main() {
+int main(int argc, char *argv[]) {
     printf("Attivatore_pid: %d\n", getpid());
     int msgid;
     struct message myMessage;
     int current_second = 0;
+    int STEP_ATTIVATORE, SIM_DURATION;
+
+    if (argc != 3) {
+        fprintf(stderr, "Error, wrong number of argument for attivatore\n");
+        exit(EXIT_FAILURE);
+    }
+
+    // Interpretazione dei parametri
+    STEP_ATTIVATORE = atoi(argv[1]);
+    SIM_DURATION = atoi(argv[2]);
 
     msgid = msgget(MSGKEY, 0);
+    if (msgid == -1) {
+        fprintf(stderr, "%s: %d. Errore in msgget #%03d: %s\n", __FILE__, __LINE__, errno, strerror(errno));
+        exit(EXIT_FAILURE);
+    }
+    printf("msgid sono in ATTIVATORE: %d\n",msgid);
     myMessage.msg_type = 1;
     myMessage.msg_text[0] = (char) "scissione";
-    printf("msgid sono in ATTIVATORE: %d\n",msgid);
+
 
 
     while(current_second <= SIM_DURATION) {
         if (current_second == STEP_ATTIVATORE) {
             msgsnd(msgid, &myMessage, sizeof(myMessage), 0);
-            printf("mesaggio inviato!\n\n");
+            printf("messaggio inviato!\n\n");
         }
         current_second++;
     }
-
-
-
 
 
 }

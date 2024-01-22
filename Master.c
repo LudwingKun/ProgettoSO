@@ -11,9 +11,11 @@
 #include <time.h>
 #include <sys/msg.h>
 #include <signal.h>
-
 #include "Util.h"
+#include "macro.h"
 #include "SemaforiUtil.h"
+
+
 void seedRandom() {
     struct timespec ts;
     unsigned long seed;
@@ -39,17 +41,66 @@ int getRandomNumber(int lowerLimit, int upperLimit) { /*questa va chiamata con l
 
 int main() {
 	int i;
-	int pid, pid_attivatore, pid_alimentazione;
-	int atomi_pids[N_ATOMI_INIT];
-	char *argv[] = {NULL}, *envp[] = {NULL}; 
-	int status;
+	int pid_attivatore, pid_alimentazione;
+    int N_ATOMI_INIT, ENERGY_DEMAND, MIN_N_ATOMICO, N_NUOVI_ATOMI, N_ATTIVATORE, N_ALIMENTAZIONE, N_ATOM_MAX, STEP_ALIMENTAZIONE, ENERGY_EXPLODE_THRESHOLD, SIM_DURATION, STEP_ATTIVATORE;
+    int atomi_pids[20]; /*array di pid degli atomi che dovrà esssere istanziato con malloc perchè variano i numeri degli atomi creati!*/
+	/*char *args1[]; passare come argv i parametri nell'execve
+    char *args2[] = {};
+    char *args3[] = {}; */
     int current_second;
-	/*************************************** CREAZIONE STRUTTURE *****************************************************/
-	int semid, shmid, msgid, semReadId;
+    int semid, shmid, msgid, semReadId, shmidReport;
+    struct Dump dump = {0, 0, 0, 0, 0};
+
+    /*char *filePath_atomo = "atomo";
+    char *filePath_attivatore = "attivatore";
+    char *filePath_alimentazione = "alimentazione";*/
+
+
+    /*************************************** LETTURA PARAMETRI *****************************************************/
+    FILE *file = fopen("config_1.txt", "r");
+
+    if (file == NULL) {
+        perror("Errore nell'apertura del file");
+        exit(EXIT_FAILURE);
+    }
+
+    // Leggi i parametri dal file
+    if (fscanf(file,"N_ATOMI_INIT=%d\nN_ATTIVATORE=%d\nN_ALIMENTAZIONE=%d\nENERGY_DEMAND=%d\nN_ATOM_MAX=%d\nMIN_N_ATOMICO=%d\nSTEP_ATTIVATORE=%d\nSTEP_ALIMENTAZIONE=%d\nN_NUOVI_ATOMI=%d\nSIM_DURATION=%d\nENERGY_EXPLODE_THRESHOLD=%d\n", &N_ATOMI_INIT, &N_ATTIVATORE, &N_ALIMENTAZIONE, &ENERGY_DEMAND, &N_ATOM_MAX, &MIN_N_ATOMICO, &STEP_ATTIVATORE, &STEP_ALIMENTAZIONE, &N_NUOVI_ATOMI, &SIM_DURATION, &ENERGY_EXPLODE_THRESHOLD) != 11) {
+        fprintf(stderr, "Errore nella lettura dei parametri di configurazione\n");
+        exit(EXIT_FAILURE);
+    }
+
+    // Chiudi il file dopo aver letto i parametri
+    fclose(file);
+
+    printf("SIM_DURATION %d\n\n", SIM_DURATION);
+
+    /*ora i parametri sono nelle variabili ma come faccio a passargli agli altri processi o a renderle visibili agli altri processi?
+     * */
+
+    /*idea: posso trasformare i parametri del file in char e poi riconvertirli in interi nei file dei processi!*/
+
+
+
+    /*************************************** CREAZIONE STRUTTURE *****************************************************/
 
 	shmid = shmget(SHMKEY, sizeof(int) * (N_ATOMI_INIT + N_NUOVI_ATOMI), IPC_CREAT | 0666);
 	if (shmid == -1) {
         fprintf(stderr, "%s: %d. Errore in shmget #%03d: %s\n", __FILE__, __LINE__, errno, strerror(errno));
+        exit(EXIT_FAILURE);
+    }
+
+    /* Creazione MEMORIA CONDIVISA per le statistiche ogni secondo, metto struttura DUMP! */
+    shmidReport = shmget(SHMKEYREPORT, sizeof(struct Dump) , IPC_CREAT | 0666);
+    if (shmidReport == -1) {
+        fprintf(stderr, "%s: %d. Errore in shmget #%03d: %s\n", __FILE__, __LINE__, errno, strerror(errno));
+        exit(EXIT_FAILURE);
+    }
+
+    // Associo la memoria condivisa al processo
+    struct Dump *shared_dump = (struct Dump *)shmat(shmidReport, NULL, 0);
+    if ((struct Dump *)shared_dump == (struct Dump *)(-1)) {
+        perror("shmat");
         exit(EXIT_FAILURE);
     }
 
@@ -67,10 +118,49 @@ int main() {
         fprintf(stderr, "%s: %d. Errore in msgget #%03d: %s\n", __FILE__, __LINE__, errno, strerror(errno));
         exit(EXIT_FAILURE);
     }
+    printf("msgid sono in MASTER: %d\n",msgid);
 
 
 
 	/*************************************** FINE CREAZIONE STRUTTURE *****************************************************/
+	/* Proviamo a trasformare STEP_ATTIVATORE E SIM_DURATION! da int a char per passarli! */
+    char buffer[10];
+    char buffer2[10];
+    char buffer3[10];
+    char buffer4[10];
+    char buffer5[10];
+
+    /* Utilizza sprintf per convertire l'intero in una stringa */
+    sprintf(buffer, "%d", STEP_ATTIVATORE);
+    sprintf(buffer2, "%d", SIM_DURATION);
+    sprintf(buffer3, "%d", STEP_ALIMENTAZIONE);
+    sprintf(buffer4, "%d", N_NUOVI_ATOMI);
+    sprintf(buffer5, "%d", N_ATOM_MAX);
+
+    /*printf("Il numero intero come stringa: %s\n", buffer);*/
+    char *args1[] = {"atomo", buffer, buffer2, NULL};
+    char *args2[] = {"attivatore", buffer, buffer2, NULL};
+    char *args3[] = {"alimentazione", buffer2, buffer3, buffer4, buffer5, NULL};
+
+
+
+    /*args1[0] = "atomo";
+    args1[1] = buffer;
+    args1[2] = buffer2;
+    args1[3] = NULL;
+
+    args2[0] = "attivatore";
+    args2[1] = buffer;
+    args2[2] = buffer2;
+    args2[3] = NULL;
+
+    args3[0] = "alimentazione";
+    args3[1] = buffer2;
+    args3[2] = buffer3;
+    args3[3] = buffer4;
+    args3[4] = buffer5;
+    args3[5] = NULL; */
+
 
     /*inizializzo il semaforo*/
     sem_init(semid);
@@ -89,8 +179,8 @@ int main() {
 
                 printf("Atomo %d waiting for 0 before fire execve \n", getpid());
                 sem_wait_for_zero(semid);
-                execve("atomo", argv, envp);
-                if(execve("atomo", argv, envp) == -1) {
+                execve("atomo",args1 , NULL);
+                if(execve("atomo", args1, NULL) == -1) {
                 	perror("execve");
                 	exit(EXIT_FAILURE);
                 }
@@ -120,8 +210,8 @@ int main() {
 
             printf("Attivatore waiting for zero...");
             sem_wait_for_zero(semid);
-            execve("attivatore", argv, envp);
-            if(execve("attivatore", argv, envp) == -1) {
+            execve("attivatore", args2, NULL);
+            if(execve("attivatore", args2, NULL) == -1) {
                 perror("execve");
                	exit(EXIT_FAILURE);
             }
@@ -142,8 +232,8 @@ int main() {
             printf("Alimentazione con pid %d", getpid());
             printf("Alimentazione waiting for zero");
             sem_wait_for_zero(semid);
-            execve("alimentazione", argv, envp);
-            if(execve("alimentazione", argv, envp) == -1) {
+            execve("alimentazione", args3, NULL);
+            if(execve("alimentazione", args3, NULL) == -1) {
                 perror("execve");
                	exit(EXIT_FAILURE);
             }
@@ -152,22 +242,49 @@ int main() {
             break;
     }
 
-    /*sleep(10);*/
+    sleep(10);
     sem_down(semid);
     sem_wait_for_zero(semid);
+
     printf("START!\n");
 
     for(current_second = 0; current_second <= SIM_DURATION; current_second++) {
-        printf("current_second: %d\n", current_second);
+        //sleep(10);
+        /*kill processi atomo*/
+        /*for(i = 0; i < N_ATOMI_INIT; i++) {
+            printf("atomi_pids[%d] = %d\n", i, atomi_pids[i]);
+            kill(atomi_pids[i], SIGKILL);
+        }*/
+        /*************************** STATISTICHE (al sec) **********************************************************/
+        printf("Secondo %d\n", current_second);
+        printf("Attivazioni dell'Attivatore: %d\n", dump.attivazione);
+        printf("Scissioni al secondo: %d\n", dump.scissione);
+        printf("Energia Prodotta al secondo: %d\n", dump.energia_prodotta);
+        printf("Energia Consumata al secondo: %d\n", dump.energia_consumata);
+        printf("Scorie prodotte al secondo: %d\n\n\n", dump.scoria_prodotta);
+
+        /*************************** STATISTICHE (totali) **********************************************************/
+        /* In realtà vedi se dividere e se non c'è bisogno */
     }
-    sleep(10);
-    /*kill processi atomo*/
-    /*for(i = 0; i < N_ATOMI_INIT; i++) {
-        printf("atomi_pids[%d] = %d\n", i, atomi_pids[i]);
-        kill(atomi_pids[i], SIGKILL);
-    }*/
+
+    sleep(10); /*Questa sleep serve sennò il master finisce prima degli altri processi*/
+
+
 
     /* Rimozione dei semafori e della memoria condivisa */
+    /* detach memoria condivisa dal processo */
+    if (shmdt(shared_dump) == -1) {
+        perror("shmdt");
+        exit(EXIT_FAILURE);
+    }
+
+    /* rimozione memoria condivisa */
+    if (shmctl(shmidReport, IPC_RMID, NULL) == -1) {
+        perror("shmctl");
+        exit(EXIT_FAILURE);
+    }
+
+
     semctl(semid, 0, IPC_RMID);
     semctl(semReadId, 0, IPC_RMID);
     shmctl(shmid, IPC_RMID, NULL);

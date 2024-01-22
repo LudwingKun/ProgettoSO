@@ -2,27 +2,37 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/msg.h>
-/*#include "macro.h"*/
+#include <sys/errno.h>
+#include <string.h>
+#include "macro.h"
 #include "Util.h"
 
-int main() {
-    printf("Atomo di pid: %d\n\n", getpid());
+/*Funziona però meglio se si trova una maniera migliore di strutturare il codice perchè sono un sacco di parametri!!*/
 
+int main(int argc, char *argv[]) {
     /*Primo atomo che trova prova a leggere dalla coda:*/
     int msgid;
     struct message myMessage;
     int current_second = 0;
+    int STEP_ATTIVATORE, SIM_DURATION;
+
+    if (argc != 3) {
+        fprintf(stderr, "Error, wrong number of argument for atomo\n");
+        exit(EXIT_FAILURE);
+    }
+
+    // Interpretazione dei parametri
+    STEP_ATTIVATORE = atoi(argv[1]);
+    SIM_DURATION = atoi(argv[2]);
+
 
     msgid = msgget(MSGKEY, 0);
-
-    /*printf("msgid sono in atomo: %d\n",msgid);
-
-    /*printf("msgid sono in atomo: %d\n",msgid);
-
-    if (msgrcv(msgid, &myMessage, sizeof(myMessage), 1, 0) == -1) {
-        perror("msgrcv yo");
+    if (msgid == -1) {
+        fprintf(stderr, "%s: %d. Errore in msgget #%03d: %s\n", __FILE__, __LINE__, errno, strerror(errno));
         exit(EXIT_FAILURE);
-    }*/
+    }
+    printf("msgid sono in atomo: %d\n", msgid);
+
 
     /*Prendere da memoria condivisa?*/
     printf("numero atomico dell'atomo %d e' ==== %d\n", atomo.pid, atomo.numero_atomico);
@@ -31,7 +41,7 @@ int main() {
     while(current_second <= SIM_DURATION) {
         printf("cioa\n\n");
         if (current_second == STEP_ATTIVATORE) {
-            msgrcv(msgid, &myMessage, sizeof(myMessage), 1, 0); /*1 sarebbe il tipo del messaggio */!
+            msgrcv(msgid, &myMessage, sizeof(myMessage), 1, 0); /*1 sarebbe il tipo del messaggio */
             printf("messaggio ricevuto: %s\n\n", myMessage.msg_text);
         }
         current_second++;
