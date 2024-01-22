@@ -14,6 +14,7 @@
 
 #include "Util.h"
 #include "SemaforiUtil.h"
+#include "MacroUtil.h"
 void seedRandom() {
     struct timespec ts;
     unsigned long seed;
@@ -73,7 +74,7 @@ int main() {
 	/*************************************** FINE CREAZIONE STRUTTURE *****************************************************/
 
     /*inizializzo il semaforo*/
-    sem_init(semid);
+    sem_init(semid, N_ATTIVATORE + N_ATOMI_INIT + N_ALIMENTAZIONE +1);
 	for (i=0;i<N_ATOMI_INIT;i++) {
 		atomi_pids[i] = fork();
         switch (atomi_pids[i]) {
