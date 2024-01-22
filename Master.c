@@ -35,8 +35,10 @@ int main() {
     struct Dump dump = {0, 0, 0, 0, 0};
     struct Dump *shared_dump;
     int numero_atomico;
-
-
+    int file_pipe[2];
+    char data[5];
+    char somedata[10] ;
+    int data_processed;
     char buffer[10];
     char buffer2[10];
     char buffer3[10];
@@ -111,6 +113,11 @@ int main() {
     printf("msgid sono in MASTER: %d\n", msgid);
 
 
+    if(pipe(file_pipe) == -1){
+        perror("fail in pipe");
+        exit(EXIT_FAILURE);
+    }
+
 
     /*************************************** FINE CREAZIONE STRUTTURE *****************************************************/
     /* Proviamo a trasformare STEP_ATTIVATORE E SIM_DURATION! da int a char per passarli! */
@@ -151,8 +158,8 @@ int main() {
     sem_init(semid, N_ATTIVATORE + N_ATOMI_INIT + N_ALIMENTAZIONE + 1);
 
     for (i = 0; i < N_ATOMI_INIT; i++) {
-        numero_atomico = random_btw(1, N_ATOM_MAX);
-        sprintf(args1[3], "%d", numero_atomico);
+      /*  numero_atomico = random_btw(1, N_ATOM_MAX);*/
+    /* //   sprintf(args1[3], "%d", numero_atomico);*/
         printf("numero_atomico: %d\n", numero_atomico);
         atomi_pids[i] = fork();
         switch (atomi_pids[i]) {
@@ -160,8 +167,13 @@ int main() {
                 perror("fork fail for atom");
                 exit(EXIT_FAILURE);
             case 0:
+                close(file_pipe[1]); /*chiudi scrittura*/
                 sem_down(semid); /*decremento del semaforo*/
                 printf("Atomo creato!\npid: %d \npadre: %d \n", getpid(), getppid());
+                sleep(1);
+                read(file_pipe[0], data, sizeof(data));
+                printf("data %s\n", data);
+                sprintf(args1[3], "%d", data);
                 printf("Atomo %d waiting for 0 before fire execve \n", getpid());
                 sem_wait_for_zero(semid);
                 if (execve("bin/atomo", args1, NULL) == -1) {
@@ -171,7 +183,10 @@ int main() {
                 exit(EXIT_FAILURE);
             default:
                 /* PIPE -> atomo si mette in ascolto e attende il numero atomico che gli invia il padre */
-                atomo.pid = atomi_pids[i];
+                close(file_pipe[0]);
+                numero_atomico = random_btw(1, N_ATOM_MAX);
+                sprintf(somedata, "%d", numero_atomico);
+                write(file_pipe[1], somedata, strlen(somedata) );
                 break;
         }
     }

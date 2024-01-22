@@ -36,10 +36,7 @@ int main(int argc, char *argv[]) {
     }
     printf("msgid sono in atomo: %d\n", msgid);
 
-/***TODO: cosa è quel atomo?
- *
- *dichiarato ****/
-    /*Prendere da memoria condivisa?*/
+
     printf("numero atomico dell'atomo %d e' ==== %d\n", atomo.pid, atomo.numero_atomico);
     while(current_second <= SIM_DURATION) {
         if (current_second == STEP_ATTIVATORE) {
