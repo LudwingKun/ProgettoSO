@@ -7,6 +7,7 @@
 #include "macro.h"
 #include "Util.h"
 
+
 /*Funziona però meglio se si trova una maniera migliore di strutturare il codice perchè sono un sacco di parametri!!*/
 
 int main(int argc, char *argv[]) {
@@ -25,6 +26,13 @@ int main(int argc, char *argv[]) {
     STEP_ATTIVATORE = atoi(argv[1]);
     SIM_DURATION = atoi(argv[2]);
 
+int main() {
+    int msgid;
+    struct message myMessage;
+    int current_second = 0;
+    printf("Atomo di pid: %d\n\n", getpid());
+
+    /*Primo atomo che trova prova a leggere dalla coda:*/
 
     msgid = msgget(MSGKEY, 0);
     if (msgid == -1) {
@@ -36,8 +44,6 @@ int main(int argc, char *argv[]) {
 
     /*Prendere da memoria condivisa?*/
     printf("numero atomico dell'atomo %d e' ==== %d\n", atomo.pid, atomo.numero_atomico);
-
-
     while(current_second <= SIM_DURATION) {
         printf("cioa\n\n");
         if (current_second == STEP_ATTIVATORE) {

@@ -33,4 +33,4 @@ void sem_down(int sem_id);
  * @param sem_id
  */
 void sem_wait_for_zero(int sem_id);
-#endif //PROGETTOSO_LIBSEMAFORI_H
+#endif
