@@ -8,10 +8,11 @@
 #define PROGETTOSO_LIBSEMAFORI_H
 /**
  * questa funzione inizializza il semaforo per la sincronizzazione iniziale
- * della simulazione
+ * della simulazione, il valore del semaforo é passato come parametro
  * @param sem_id
+ * @param val
  */
-void sem_init(int sem_id);
+void sem_init(int sem_id, int val);
 /**
  * questa funzione incrementa il valore del semaforo
  *in caso di errore stampa un msg
