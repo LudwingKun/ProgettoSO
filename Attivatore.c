@@ -6,6 +6,7 @@
 #include <sys/msg.h>
 #include <sys/errno.h>
 #include <string.h>
+#include <sys/shm.h>
 #include "lib/macro.h"
 #include "lib/Util.h"
 
@@ -16,9 +17,10 @@ int main(int argc, char *argv[]) {
     int msgid;
     struct message myMessage;
     int current_second = 0;
-    int STEP_ATTIVATORE, SIM_DURATION;
+    int STEP_ATTIVATORE, SIM_DURATION,shmid;
+    int  * memory;
 
-    if (argc != 3) {
+    if (argc != 4) {
         fprintf(stderr, "Error, wrong number of argument for attivatore\n");
         exit(EXIT_FAILURE);
     }
@@ -26,6 +28,11 @@ int main(int argc, char *argv[]) {
 
     STEP_ATTIVATORE = atoi(argv[1]);
     SIM_DURATION = atoi(argv[2]);
+    shmid = atoi(argv[3]);
+
+    /* Attacco emmoria condivisa a pointer */
+    memory=(int*)shmat(shmid,NULL,0);
+    printf("!!!!Lettura memoria %d \n", *memory);
 
     msgid = msgget(MSGKEY, 0);
     if (msgid == -1) {
