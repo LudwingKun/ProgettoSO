@@ -14,7 +14,7 @@ struct Atomo {
 
 typedef struct message {
     long msg_type;
-    char msg_text[2];
+    char msg_text[100];
 } message;
 
 /*Dump per riportare le statistiche ogni secondo*/

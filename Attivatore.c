@@ -18,7 +18,7 @@ int main(int argc, char *argv[]) {
     int current_second = 0;
     int STEP_ATTIVATORE, SIM_DURATION;
     int *puntatore_pids;
-
+    int num_bytes;
     if (argc != 4) {
         fprintf(stderr, "Error, wrong number of argument for attivatore\n");
         exit(EXIT_FAILURE);
@@ -47,8 +47,13 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
     printf("msgid sono in ATTIVATORE: %d\n",msgid);
-    myMessage.msg_type = 1;
-    myMessage.msg_text[0] = (char) "scissione";
+    /*TODO: FALSO COME GIUDA QUEL 3, LÌ CI VA IL CONTATORE DEI PID*/
+    for( i = 0; i < 3; i++){
+        myMessage.msg_type = puntatore_pids[i];
+        num_bytes = sprintf(myMessage.msg_text, "scissione");
+        msgsnd(msgid, &myMessage, num_bytes, 0);
+    }
+
 
 
 

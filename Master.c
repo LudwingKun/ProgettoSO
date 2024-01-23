@@ -18,7 +18,7 @@
 #include "lib/GeneralUtils.h"
 
 
-random_btw(int min, int max) { return rand() % (max - min + 1) + min; }
+int random_btw(int min, int max);
 
 
 int main(int argc, char *argv[]) {
@@ -34,11 +34,11 @@ int main(int argc, char *argv[]) {
     int semid, shmid, msgid, shmidReport;
     struct Dump dump = {0, 0, 0, 0, 0};
     struct Dump *shared_dump;
+
     int numero_atomico; /*num spedito dal padre*/
     int num; /*num letto dall'atomo*/
     int file_pipe[2];
-    char somedata[10] ;
-    int data_processed;
+
     char buffer[10];
     char buffer2[10];
     char buffer3[10];
@@ -174,7 +174,7 @@ int main(int argc, char *argv[]) {
         }
 
 
-
+/**TODO: non é una doppia dichiarazione ? **/
         atomi_pids[i] = fork();
         switch (atomi_pids[i]) {
             case -1:
@@ -190,7 +190,7 @@ int main(int argc, char *argv[]) {
                 read(file_pipe[0], &num, sizeof(int));
                 printf("numero letto: %d per atomo con pid: %d\n", num, getpid());
                 close(file_pipe[0]);
-                /*TEST_ERROR*/
+                TEST_ERROR
                 sprintf(args1[3], "%d", num); /*conversione a stringa*/
 
                 printf("!!!!LETTURA Atomo_pid da MASTER: %d\n", getpid());
@@ -284,6 +284,7 @@ int main(int argc, char *argv[]) {
 
         /*************************** STATISTICHE (totali) **********************************************************/
         /* In realtà vedi se dividere e se non c'è bisogno */
+        sleep(1);
     }
 
     sleep(5); /*Questa sleep serve sennò il master finisce prima degli altri processi*/
@@ -321,3 +322,6 @@ int main(int argc, char *argv[]) {
 
 
 }
+
+
+int random_btw(int max, int min){ return rand() % (max - min + 1) + min; }
