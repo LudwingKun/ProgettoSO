@@ -33,6 +33,7 @@ int main(int argc, char *argv[]) {
     /* Attacco emmoria condivisa a pointer */
     memory=(int*)shmat(shmid,NULL,0);
     printf("!!!!Lettura memoria %d \n", *memory);
+    printf("!!!!shmid sono in ATTIVATORE: %d\n", shmid);
 
     msgid = msgget(MSGKEY, 0);
     if (msgid == -1) {

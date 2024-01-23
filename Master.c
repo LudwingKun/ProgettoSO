@@ -83,6 +83,7 @@ int main() {
         fprintf(stderr, "%s: %d. Errore in shmget #%03d: %s\n", __FILE__, __LINE__, errno, strerror(errno));
         exit(EXIT_FAILURE);
     }
+    printf("....shmid sono in MASTER: %d\n", shmid);
 
     /* Creazione MEMORIA CONDIVISA per le statistiche ogni secondo, metto struttura DUMP! */
     shmidReport = shmget(SHMKEYREPORT, sizeof(struct Dump), IPC_CREAT | 0666);
@@ -111,7 +112,7 @@ int main() {
         fprintf(stderr, "%s: %d. Errore in msgget #%03d: %s\n", __FILE__, __LINE__, errno, strerror(errno));
         exit(EXIT_FAILURE);
     }
-    printf("msgid sono in MASTER: %d\n", msgid);
+    printf("....msgid sono in MASTER: %d\n", msgid);
 
 
     if(pipe(file_pipe) == -1){
