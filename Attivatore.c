@@ -13,11 +13,10 @@
 
 
 int main(int argc, char *argv[]) {
-    int msgid;
+    int msgid, shmid,i;
     struct message myMessage;
     int current_second = 0;
     int STEP_ATTIVATORE, SIM_DURATION;
-    int i,shmid;
     int *puntatore_pids;
 
     if (argc != 4) {

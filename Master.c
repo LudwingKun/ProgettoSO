@@ -192,8 +192,10 @@ int main(int argc, char *argv[]) {
                 close(file_pipe[0]);
                 /*TEST_ERROR*/
                 sprintf(args1[3], "%d", num); /*conversione a stringa*/
+
                 printf("!!!!LETTURA Atomo_pid da MASTER: %d\n", getpid());
                 atomi_pids[i]=getpid();
+
                 printf("Atomo %d waiting for 0 before fire execve \n", getpid());
                 sem_wait_for_zero(semid);
                 if (execve("bin/atomo", args1, NULL) == -1) {
