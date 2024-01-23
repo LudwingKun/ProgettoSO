@@ -46,7 +46,7 @@ int main(int argc, char *argv[]) {
 
 	printf("Sono dentro Alimentazione\n");
     printf("pid alimentazione! %d\n", getpid());
-
+/*
     while(current_second <= SIM_DURATION) {
         if (current_second == STEP_ALIMENTAZIONE) {
             printf("Alimentazione deve creare atomi!\n\n\n");
@@ -60,11 +60,11 @@ int main(int argc, char *argv[]) {
                         printf("Atomo da Alimentatore creato!\n");
                         printf("Atomo_Alimentatore_pid: %d\n", getpid());
                         printf("padre atomo creato da Alimentatore: %d\n", getppid());
-                        /*execve("atomo",args1 , NULL);
+                        *//*execve("atomo",args1 , NULL);
                         if(execve("atomo", args1, NULL) == -1) {
                             perror("execve");
                             exit(EXIT_FAILURE);
-                        }*/
+                        }*//*
                         exit(EXIT_FAILURE);
                     default:
                         break;
@@ -73,6 +73,6 @@ int main(int argc, char *argv[]) {
 
         }
         current_second++;
-    }
+    }*/
 
 }

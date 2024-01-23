@@ -37,6 +37,7 @@ int main(int argc, char *argv[]) {
     myMessage.msg_text[0] = (char) "scissione";
 
 
+/*
 
     while(current_second <= SIM_DURATION) {
         if (current_second == STEP_ATTIVATORE) {
@@ -45,6 +46,7 @@ int main(int argc, char *argv[]) {
         }
         current_second++;
     }
+*/
 
 
 }

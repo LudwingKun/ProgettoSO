@@ -37,11 +37,11 @@ int main(int argc, char *argv[]) {
     printf("msgid sono in atomo: %d\n", msgid);
 
 
-    printf("numero atomico dell'atomo %d e' ==== %d\n", atomo.pid, atomo.numero_atomico);
     while(current_second <= SIM_DURATION) {
         if (current_second == STEP_ATTIVATORE) {
             msgrcv(msgid, &myMessage, sizeof(myMessage), 1, 0); /*1 sarebbe il tipo del messaggio */
             printf("messaggio ricevuto: %s\n\n", myMessage.msg_text);
+            break;
         }
         current_second++;
     }

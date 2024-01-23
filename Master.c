@@ -12,7 +12,7 @@
 #include <time.h>
 #include <sys/msg.h>
 #include <signal.h>
-
+#include "lib/MacroUtil.h"
 #include "lib/Util.h"
 #include "lib/macro.h"
 #include "lib/GeneralUtils.h"
@@ -34,9 +34,9 @@ int main() {
     int semid, shmid, msgid, shmidReport;
     struct Dump dump = {0, 0, 0, 0, 0};
     struct Dump *shared_dump;
-    int numero_atomico;
+    int numero_atomico; /*num spedito dal padre*/
+    int num; /*num letto dall'atomo*/
     int file_pipe[2];
-    char data[5];
     char somedata[10] ;
     int data_processed;
     char buffer[10];
@@ -113,10 +113,6 @@ int main() {
     printf("msgid sono in MASTER: %d\n", msgid);
 
 
-    if(pipe(file_pipe) == -1){
-        perror("fail in pipe");
-        exit(EXIT_FAILURE);
-    }
 
 
     /*************************************** FINE CREAZIONE STRUTTURE *****************************************************/
@@ -152,28 +148,38 @@ int main() {
     args3[3] = buffer4;
     args3[4] = buffer5;
     args3[5] = NULL; */
+
     srand(time(NULL));
 
     /*inizializzo il semaforo*/
     sem_init(semid, N_ATTIVATORE + N_ATOMI_INIT + N_ALIMENTAZIONE + 1);
-
     for (i = 0; i < N_ATOMI_INIT; i++) {
-      /*  numero_atomico = random_btw(1, N_ATOM_MAX);*/
-    /* //   sprintf(args1[3], "%d", numero_atomico);*/
-        printf("numero_atomico: %d\n", numero_atomico);
+        if(pipe(file_pipe) == -1){
+            perror("fail in pipe");
+            exit(EXIT_FAILURE);
+        }
+
+
+
         atomi_pids[i] = fork();
         switch (atomi_pids[i]) {
             case -1:
                 perror("fork fail for atom");
                 exit(EXIT_FAILURE);
             case 0:
-                close(file_pipe[1]); /*chiudi scrittura*/
+
                 sem_down(semid); /*decremento del semaforo*/
                 printf("Atomo creato!\npid: %d \npadre: %d \n", getpid(), getppid());
+
+                /*ricezione numero atomico*/
+                close(file_pipe[1]); /*chiudi scrittura*/
                 sleep(1);
-                read(file_pipe[0], data, sizeof(data));
-                printf("data %s\n", data);
-                sprintf(args1[3], "%d", data);
+                read(file_pipe[0], &num, sizeof(int));
+                printf("numero letto:  %d\n", num);
+                close(file_pipe[0]);
+                TEST_ERROR
+                sprintf(args1[3], "%d", num); /*conversione a stringa*/
+
                 printf("Atomo %d waiting for 0 before fire execve \n", getpid());
                 sem_wait_for_zero(semid);
                 if (execve("bin/atomo", args1, NULL) == -1) {
@@ -185,15 +191,19 @@ int main() {
                 /* PIPE -> atomo si mette in ascolto e attende il numero atomico che gli invia il padre */
                 close(file_pipe[0]);
                 numero_atomico = random_btw(1, N_ATOM_MAX);
-                sprintf(somedata, "%d", numero_atomico);
-                write(file_pipe[1], somedata, strlen(somedata) );
+                printf("PADRE PRODUCE : %d \n", numero_atomico);
+                write(file_pipe[1], &numero_atomico, sizeof(int) );
                 break;
         }
+
     }
+
+    close(file_pipe[1]);
 
     for (i = 0; i < N_ATOMI_INIT; i++) {
         printf("Atomo %d: %d\n", i, atomi_pids[i]);
     }
+
     pid_attivatore = fork();
     switch (pid_attivatore) {
         case -1:
@@ -236,7 +246,7 @@ int main() {
             break;
     }
 
-    sleep(10);
+    sleep(5);
     sem_down(semid);
     sem_wait_for_zero(semid);
 
@@ -260,7 +270,7 @@ int main() {
         /* In realtà vedi se dividere e se non c'è bisogno */
     }
 
-    sleep(10); /*Questa sleep serve sennò il master finisce prima degli altri processi*/
+    sleep(5); /*Questa sleep serve sennò il master finisce prima degli altri processi*/
 
 
 
