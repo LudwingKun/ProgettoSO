@@ -26,10 +26,10 @@ int main(int argc, char *argv[]) {
     int i;
     int pid_attivatore, pid_alimentazione;
     int N_ATOMI_INIT, ENERGY_DEMAND, MIN_N_ATOMICO, N_NUOVI_ATOMI, N_ATTIVATORE, N_ALIMENTAZIONE, N_ATOM_MAX, STEP_ALIMENTAZIONE, ENERGY_EXPLODE_THRESHOLD, SIM_DURATION, STEP_ATTIVATORE;
-    int atomi_pids[20]; /*array di pid degli atomi che dovrà esssere istanziato con malloc perchè variano i numeri degli atomi creati!*/
-    char *args1[4];
+    /*int atomi_pids[20]; array di pid degli atomi che dovrà esssere istanziato con malloc perchè variano i numeri degli atomi creati!*/
+    /*char *args1[4];
     char *args2[5];
-    char *args3[6];
+    char *args3[6]; */
     int current_second;
     int semid, shmid, msgid, shmidReport;
     struct Dump dump = {0, 0, 0, 0, 0};
@@ -77,13 +77,23 @@ int main(int argc, char *argv[]) {
 
 
     /*************************************** CREAZIONE STRUTTURE *****************************************************/
+    int *atomi_pids = malloc(N_ATOMI_INIT + N_NUOVI_ATOMI * sizeof(*atomi_pids));
 
+
+    /* Creazione MEMORIA CONDIVISA per array pid */
     shmid = shmget(SHMKEY, sizeof(int) * (N_ATOMI_INIT + N_NUOVI_ATOMI), IPC_CREAT | 0666);
     if (shmid == -1) {
         fprintf(stderr, "%s: %d. Errore in shmget #%03d: %s\n", __FILE__, __LINE__, errno, strerror(errno));
         exit(EXIT_FAILURE);
     }
     printf("....shmid sono in MASTER: %d\n", shmid);
+
+    /* Collega la memoria condivisa al puntatore*/
+    atomi_pids = (int*)shmat(shmid,NULL,0);
+    if (atomi_pids == (void *)-1) {
+        perror("shmat");
+        return 1;
+    }
 
     /* Creazione MEMORIA CONDIVISA per le statistiche ogni secondo, metto struttura DUMP! */
     shmidReport = shmget(SHMKEYREPORT, sizeof(struct Dump), IPC_CREAT | 0666);
@@ -130,10 +140,11 @@ int main(int argc, char *argv[]) {
     sprintf(buffer6, "%d", shmid);
 
     /*printf("Il numero intero come stringa: %s\n", buffer);*/
-    /*char *args1[] = {"atomo", buffer, buffer2, buffer,NULL};
+    char *args1[] = {"atomo", buffer, buffer2, buffer,NULL};
     char *args2[] = {"attivatore", buffer, buffer2, buffer6, NULL};
-    char *args3[] = {"alimentazione", buffer2, buffer3, buffer4, buffer5, NULL}; */
+    char *args3[] = {"alimentazione", buffer2, buffer3, buffer4, buffer5, NULL};
 
+    /*
     args1[0] = "atomo";
     args1[1] = buffer;
     args1[2] = buffer2;
@@ -150,7 +161,7 @@ int main(int argc, char *argv[]) {
     args3[2] = buffer3;
     args3[3] = buffer4;
     args3[4] = buffer5;
-    args3[5] = NULL;
+    args3[5] = NULL; */
 
     srand(time(NULL));
 
@@ -170,7 +181,6 @@ int main(int argc, char *argv[]) {
                 perror("fork fail for atom");
                 exit(EXIT_FAILURE);
             case 0:
-
                 sem_down(semid); /*decremento del semaforo*/
                 printf("Atomo creato!\npid: %d \npadre: %d \n", getpid(), getppid());
 
@@ -182,7 +192,8 @@ int main(int argc, char *argv[]) {
                 close(file_pipe[0]);
                 /*TEST_ERROR*/
                 sprintf(args1[3], "%d", num); /*conversione a stringa*/
-
+                printf("!!!!LETTURA Atomo_pid da MASTER: %d\n", getpid());
+                atomi_pids[i]=getpid();
                 printf("Atomo %d waiting for 0 before fire execve \n", getpid());
                 sem_wait_for_zero(semid);
                 if (execve("bin/atomo", args1, NULL) == -1) {
@@ -278,6 +289,13 @@ int main(int argc, char *argv[]) {
 
 
     /* Rimozione dei semafori e della memoria condivisa */
+
+    /*detach memoria condivisa per array pid*/
+    if (shmdt(atomi_pids) == -1) {
+        perror("shmdt");
+        exit(EXIT_FAILURE);
+    }
+
     /* detach memoria condivisa dal processo */
     if (shmdt(shared_dump) == -1) {
         perror("shmdt");

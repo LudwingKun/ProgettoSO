@@ -8,6 +8,7 @@
 #include <string.h>
 #include "lib/macro.h"
 #include "lib/Util.h"
+#include <sys/shm.h>
 
 
 
@@ -16,6 +17,8 @@ int main(int argc, char *argv[]) {
     struct message myMessage;
     int current_second = 0;
     int STEP_ATTIVATORE, SIM_DURATION;
+    int i,shmid;
+    int *puntatore_pids;
 
     if (argc != 4) {
         fprintf(stderr, "Error, wrong number of argument for attivatore\n");
@@ -25,6 +28,19 @@ int main(int argc, char *argv[]) {
 
     STEP_ATTIVATORE = atoi(argv[1]);
     SIM_DURATION = atoi(argv[2]);
+    shmid=atoi(argv[3]);
+
+
+    /* Collega la memoria condivisa al puntatore*/
+    puntatore_pids = (int*)shmat(shmid,NULL,0);
+    if (puntatore_pids == (void *)-1) {
+        perror("shmat");
+        return 1;
+    }
+
+    printf("!!!!!LETTURA pid da ATTIVATORE: %d\n",puntatore_pids[0]);
+    printf("!!!!!LETTURA pid da ATTIVATORE: %d\n",puntatore_pids[1]);
+    printf("!!!!!LETTURA pid da ATTIVATORE: %d\n",puntatore_pids[2]);
 
     msgid = msgget(MSGKEY, 0);
     if (msgid == -1) {
