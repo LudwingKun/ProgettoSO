@@ -46,13 +46,13 @@ int main(int argc, char *argv[]) {
 
 
 
-    while(current_second <= SIM_DURATION) {
+   /* while(current_second <= SIM_DURATION) {
         if (current_second == STEP_ATTIVATORE) {
             msgsnd(msgid, &myMessage, sizeof(myMessage), 0);
             printf("messaggio inviato!\n\n");
         }
         current_second++;
-    }
+    }*/
 
 
 }

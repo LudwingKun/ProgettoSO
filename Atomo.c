@@ -38,13 +38,16 @@ int main(int argc, char *argv[]) {
 
 
     printf("numero atomico dell'atomo %d e' ==== %d\n", atomo.pid, atomo.numero_atomico);
-    while(current_second <= SIM_DURATION) {
+
+
+   /*  while(current_second <= SIM_DURATION) {
         if (current_second == STEP_ATTIVATORE) {
-            msgrcv(msgid, &myMessage, sizeof(myMessage), 1, 0); /*1 sarebbe il tipo del messaggio */
+            msgrcv(msgid, &myMessage, sizeof(myMessage), 1, 0); 1
             printf("messaggio ricevuto: %s\n\n", myMessage.msg_text);
         }
         current_second++;
-    }
+    } */
+
 }
 
 
