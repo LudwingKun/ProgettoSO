@@ -18,7 +18,7 @@ int main(int argc, char *argv[]) {
     int current_second = 0;
     int STEP_ATTIVATORE, SIM_DURATION;
 
-    if (argc != 3) {
+    if (argc != 4) {
         fprintf(stderr, "Error, wrong number of argument for attivatore\n");
         exit(EXIT_FAILURE);
     }
@@ -37,9 +37,8 @@ int main(int argc, char *argv[]) {
     myMessage.msg_text[0] = (char) "scissione";
 
 
-/*
 
-    while(current_second <= SIM_DURATION) {
+   /* while(current_second <= SIM_DURATION) {
         if (current_second == STEP_ATTIVATORE) {
             msgsnd(msgid, &myMessage, sizeof(myMessage), 0);
             printf("messaggio inviato!\n\n");
@@ -47,7 +46,6 @@ int main(int argc, char *argv[]) {
         current_second++;
     }
 */
-
 
 }
 

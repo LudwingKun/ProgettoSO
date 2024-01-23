@@ -46,8 +46,8 @@ int main(int argc, char *argv[]) {
 
 	printf("Sono dentro Alimentazione\n");
     printf("pid alimentazione! %d\n", getpid());
-/*
-    while(current_second <= SIM_DURATION) {
+
+  /*  while(current_second <= SIM_DURATION) {
         if (current_second == STEP_ALIMENTAZIONE) {
             printf("Alimentazione deve creare atomi!\n\n\n");
             for (i = 0; i < N_NUOVI_ATOMI; i++) {

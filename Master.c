@@ -44,6 +44,7 @@ int main() {
     char buffer3[10];
     char buffer4[10];
     char buffer5[10];
+    char buffer6[10];
     /*char *filePath_atomo = "atomo";
     char *filePath_attivatore = "attivatore";
     char *filePath_alimentazione = "alimentazione";*/
@@ -82,6 +83,7 @@ int main() {
         fprintf(stderr, "%s: %d. Errore in shmget #%03d: %s\n", __FILE__, __LINE__, errno, strerror(errno));
         exit(EXIT_FAILURE);
     }
+    printf("....shmid sono in MASTER: %d\n", shmid);
 
     /* Creazione MEMORIA CONDIVISA per le statistiche ogni secondo, metto struttura DUMP! */
     shmidReport = shmget(SHMKEYREPORT, sizeof(struct Dump), IPC_CREAT | 0666);
@@ -110,7 +112,7 @@ int main() {
         fprintf(stderr, "%s: %d. Errore in msgget #%03d: %s\n", __FILE__, __LINE__, errno, strerror(errno));
         exit(EXIT_FAILURE);
     }
-    printf("msgid sono in MASTER: %d\n", msgid);
+    printf("....msgid sono in MASTER: %d\n", msgid);
 
 
 
@@ -125,10 +127,11 @@ int main() {
     sprintf(buffer3, "%d", STEP_ALIMENTAZIONE);
     sprintf(buffer4, "%d", N_NUOVI_ATOMI);
     sprintf(buffer5, "%d", N_ATOM_MAX);
+    sprintf(buffer6, "%d", shmid);
 
     /*printf("Il numero intero come stringa: %s\n", buffer);*/
     char *args1[] = {"atomo", buffer, buffer2, buffer,NULL};
-    char *args2[] = {"attivatore", buffer, buffer2, NULL};
+    char *args2[] = {"attivatore", buffer, buffer2, buffer6, NULL};
     char *args3[] = {"alimentazione", buffer2, buffer3, buffer4, buffer5, NULL};
 
 
