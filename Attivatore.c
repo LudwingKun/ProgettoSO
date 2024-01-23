@@ -12,7 +12,6 @@
 
 
 int main(int argc, char *argv[]) {
-    printf("Attivatore_pid: %d\n", getpid());
     int msgid;
     struct message myMessage;
     int current_second = 0;

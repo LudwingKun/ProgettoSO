@@ -21,15 +21,15 @@
 random_btw(int min, int max) { return rand() % (max - min + 1) + min; }
 
 
-int main() {
+int main(int argc, char *argv[]) {
     /**************************DICHIARAZIONI DI VARIABILI QUI !!*************************************************/
     int i;
     int pid_attivatore, pid_alimentazione;
     int N_ATOMI_INIT, ENERGY_DEMAND, MIN_N_ATOMICO, N_NUOVI_ATOMI, N_ATTIVATORE, N_ALIMENTAZIONE, N_ATOM_MAX, STEP_ALIMENTAZIONE, ENERGY_EXPLODE_THRESHOLD, SIM_DURATION, STEP_ATTIVATORE;
     int atomi_pids[20]; /*array di pid degli atomi che dovrà esssere istanziato con malloc perchè variano i numeri degli atomi creati!*/
-    /*char *args1[]; passare come argv i parametri nell'execve
-    char *args2[] = {};
-    char *args3[] = {}; */
+    char *args1[4];
+    char *args2[5];
+    char *args3[6];
     int current_second;
     int semid, shmid, msgid, shmidReport;
     struct Dump dump = {0, 0, 0, 0, 0};
@@ -130,12 +130,11 @@ int main() {
     sprintf(buffer6, "%d", shmid);
 
     /*printf("Il numero intero come stringa: %s\n", buffer);*/
-    char *args1[] = {"atomo", buffer, buffer2, buffer,NULL};
+    /*char *args1[] = {"atomo", buffer, buffer2, buffer,NULL};
     char *args2[] = {"attivatore", buffer, buffer2, buffer6, NULL};
-    char *args3[] = {"alimentazione", buffer2, buffer3, buffer4, buffer5, NULL};
+    char *args3[] = {"alimentazione", buffer2, buffer3, buffer4, buffer5, NULL}; */
 
-
-    /*args1[0] = "atomo";
+    args1[0] = "atomo";
     args1[1] = buffer;
     args1[2] = buffer2;
     args1[3] = NULL;
@@ -143,14 +142,15 @@ int main() {
     args2[0] = "attivatore";
     args2[1] = buffer;
     args2[2] = buffer2;
-    args2[3] = NULL;
+    args2[3] = buffer6;
+    args2[4] = NULL;
 
     args3[0] = "alimentazione";
     args3[1] = buffer2;
     args3[2] = buffer3;
     args3[3] = buffer4;
     args3[4] = buffer5;
-    args3[5] = NULL; */
+    args3[5] = NULL;
 
     srand(time(NULL));
 
@@ -178,9 +178,9 @@ int main() {
                 close(file_pipe[1]); /*chiudi scrittura*/
                 sleep(1);
                 read(file_pipe[0], &num, sizeof(int));
-                printf("numero letto:  %d\n", num);
+                printf("numero letto: %d per atomo con pid: %d\n", num, getpid());
                 close(file_pipe[0]);
-                TEST_ERROR
+                /*TEST_ERROR*/
                 sprintf(args1[3], "%d", num); /*conversione a stringa*/
 
                 printf("Atomo %d waiting for 0 before fire execve \n", getpid());
@@ -300,4 +300,4 @@ int main() {
     return 0;
 
 
-} 
+}

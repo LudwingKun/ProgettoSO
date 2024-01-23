@@ -30,7 +30,7 @@ typedef struct Dump{
 
 int getRandomNumber(int lowerLimit, int upperLimit);
 
-void seedRandom();
+void seedRandom(void);
 
 
 

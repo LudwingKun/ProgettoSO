@@ -5,7 +5,7 @@
 #include <time.h>
 #include "lib/Util.h"
 
-void seedRandom() {
+void seedRandom(void) {
     struct timespec ts;
     unsigned long seed;
     if (clock_gettime(CLOCK_REALTIME, &ts) == -1) {
