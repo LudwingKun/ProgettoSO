@@ -13,7 +13,7 @@
 
 
 int main(int argc, char *argv[]) {
-    int msgid, shmid,shmidReport,i;
+    int msgid, shmid,shmidReport,i=0;
     struct message myMessage;
     int current_second = 0;
     int STEP_ATTIVATORE, SIM_DURATION;
@@ -49,6 +49,7 @@ int main(int argc, char *argv[]) {
     printf("!!!!!LETTURA pid da ATTIVATORE: %d\n",puntatore_pids[0]);
     printf("!!!!!LETTURA pid da ATTIVATORE: %d\n",puntatore_pids[1]);
     printf("!!!!!LETTURA pid da ATTIVATORE: %d\n",puntatore_pids[2]);
+    
 
     msgid = msgget(MSGKEY, 0);
     if (msgid == -1) {
@@ -57,7 +58,7 @@ int main(int argc, char *argv[]) {
     }
     printf("msgid sono in ATTIVATORE: %d\n",msgid);
     /*TODO: FALSO COME GIUDA QUEL 3, LÌ CI VA IL CONTATORE DEI PID*/
-    while(puntatore_pids[i]!=NULL){
+    while(puntatore_pids[i] != NULL){
         myMessage.msg_type = puntatore_pids[i];
         num_bytes = sprintf(myMessage.msg_text, "scissione");
         msgsnd(msgid, &myMessage, num_bytes, 0);
