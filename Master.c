@@ -324,4 +324,4 @@ int main(int argc, char *argv[]) {
 }
 
 
-int random_btw(int max, int min){ return rand() % (max - min + 1) + min; }
+int random_btw(int min, int max){ return rand() % (max - min + 1) + min; }
