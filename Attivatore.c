@@ -13,12 +13,14 @@
 
 
 int main(int argc, char *argv[]) {
-    int msgid, shmid,i;
+    int msgid, shmid,shmidReport,i=0;
     struct message myMessage;
     int current_second = 0;
     int STEP_ATTIVATORE, SIM_DURATION;
     int *puntatore_pids;
+    struct Dump *shared_dump;
     int num_bytes;
+
     if (argc != 4) {
         fprintf(stderr, "Error, wrong number of argument for attivatore\n");
         exit(EXIT_FAILURE);
@@ -28,9 +30,16 @@ int main(int argc, char *argv[]) {
     STEP_ATTIVATORE = atoi(argv[1]);
     SIM_DURATION = atoi(argv[2]);
     shmid=atoi(argv[3]);
+    /*shmidReport=atoi(argv[4]);*/
 
+ /*Collega la memoria condivisa Report al puntatore*/
+    /*shared_dump = (struct Dump *) shmat(shmidReport, NULL, 0);
+    if ((struct Dump *) shared_dump == (struct Dump *) (-1)) {
+        perror("shmat fail");
+        exit(EXIT_FAILURE);
+    }*/
 
-    /* Collega la memoria condivisa al puntatore*/
+    /* Collega la memoria condivisa pids al puntatore*/
     puntatore_pids = (int*)shmat(shmid,NULL,0);
     if (puntatore_pids == (void *)-1) {
         perror("shmat");
@@ -40,6 +49,7 @@ int main(int argc, char *argv[]) {
     printf("!!!!!LETTURA pid da ATTIVATORE: %d\n",puntatore_pids[0]);
     printf("!!!!!LETTURA pid da ATTIVATORE: %d\n",puntatore_pids[1]);
     printf("!!!!!LETTURA pid da ATTIVATORE: %d\n",puntatore_pids[2]);
+    
 
     msgid = msgget(MSGKEY, 0);
     if (msgid == -1) {
@@ -48,25 +58,25 @@ int main(int argc, char *argv[]) {
     }
     printf("msgid sono in ATTIVATORE: %d\n",msgid);
     /*TODO: FALSO COME GIUDA QUEL 3, LÌ CI VA IL CONTATORE DEI PID*/
-    for( i = 0; i < 3; i++){
+    while(puntatore_pids[i] != NULL){
         myMessage.msg_type = puntatore_pids[i];
         num_bytes = sprintf(myMessage.msg_text, "scissione");
         msgsnd(msgid, &myMessage, num_bytes, 0);
+        i++;
+        /*shared_dump->attivazione++;*/
     }
 
 
 
-
-   /* while(current_second <= SIM_DURATION) {
+/*
+    while(current_second <= SIM_DURATION) {
         if (current_second == STEP_ATTIVATORE) {
-            msgsnd(msgid, &myMessage, sizeof(myMessage), 0);
-            printf("messaggio inviato!\n\n");
+
         }
         current_second++;
     }
-*/
-
-}
+    */
+    }
 
 
 

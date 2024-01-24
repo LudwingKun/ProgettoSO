@@ -32,6 +32,7 @@ int main(int argc, char *argv[]) {
     char *args3[6]; */
     int current_second;
     int semid, shmid, msgid, shmidReport;
+    int *atomi_pids;
     struct Dump dump = {0, 0, 0, 0, 0};
     struct Dump *shared_dump;
 
@@ -45,6 +46,7 @@ int main(int argc, char *argv[]) {
     char buffer4[10];
     char buffer5[10];
     char buffer6[10];
+    char buffer7[10];/*problemi con le dimennsioni del buffer per il dump*/
     /*char *filePath_atomo = "atomo";
     char *filePath_attivatore = "attivatore";
     char *filePath_alimentazione = "alimentazione";*/
@@ -77,8 +79,7 @@ int main(int argc, char *argv[]) {
 
 
     /*************************************** CREAZIONE STRUTTURE *****************************************************/
-    int *atomi_pids = malloc(N_ATOMI_INIT + N_NUOVI_ATOMI * sizeof(*atomi_pids));
-
+    atomi_pids = malloc(N_ATOMI_INIT + N_NUOVI_ATOMI * sizeof(*atomi_pids));
 
     /* Creazione MEMORIA CONDIVISA per array pid */
     shmid = shmget(SHMKEY, sizeof(int) * (N_ATOMI_INIT + N_NUOVI_ATOMI), IPC_CREAT | 0666);
@@ -138,10 +139,12 @@ int main(int argc, char *argv[]) {
     sprintf(buffer4, "%d", N_NUOVI_ATOMI);
     sprintf(buffer5, "%d", N_ATOM_MAX);
     sprintf(buffer6, "%d", shmid);
+    sprintf(buffer7, "%d", shared_dump);
+
 
     /*printf("Il numero intero come stringa: %s\n", buffer);*/
     char *args1[] = {"atomo", buffer, buffer2, buffer,NULL};
-    char *args2[] = {"attivatore", buffer, buffer2, buffer6, NULL};
+    char *args2[] = {"attivatore", buffer, buffer2, buffer6,/*buffer7*/NULL};
     char *args3[] = {"alimentazione", buffer2, buffer3, buffer4, buffer5, NULL};
 
     /*

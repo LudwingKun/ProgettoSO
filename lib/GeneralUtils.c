@@ -34,7 +34,7 @@ void sem_wait_for_zero(int sem_id) {
     }
 }
 
-int P(int send_id, int n,int sem_id){
+void P(int send_id, int n,int sem_id){
     struct sembuf op;
     op.sem_num=n;
     op.sem_op=-1;
@@ -42,7 +42,7 @@ int P(int send_id, int n,int sem_id){
     semop(sem_id, &op,1);
 }
 
-int V(int send_id, int n,int sem_id){
+void V(int send_id, int n,int sem_id){
     struct sembuf op;
     op.sem_num=n;
     op.sem_op=1;
