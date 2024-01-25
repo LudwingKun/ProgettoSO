@@ -1,4 +1,3 @@
-#define _POSIX_C_SOURCE 200809L
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -8,41 +7,65 @@
 #include <string.h>
 #include "lib/macro.h"
 #include "lib/Util.h"
+#include "lib/GeneralUtils.h"
 #include <sys/shm.h>
 
 
-
 int main(int argc, char *argv[]) {
-    int msgid, shmid,shmidReport,i=0;
+    int msgid, shmid, shmidReport,i=0;
     struct message myMessage;
-    int current_second = 0;
-    int STEP_ATTIVATORE, SIM_DURATION;
+    int shmidInit, STEP_ATTIVATORE;
+    int *shmidInit_ptr;
     int *puntatore_pids;
     struct Dump *shared_dump;
     int num_bytes;
+    int semid;
 
-    if (argc != 4) {
-        fprintf(stderr, "Error, wrong number of argument for attivatore\n");
+    if (argc != 2) {
+        fprintf(stderr, "Error, wrong number of argument for atomo\n");
+        exit(EXIT_FAILURE);
+    }
+
+    shmidInit = atoi(argv[1]);
+    /*Collega la memoria condivisa Init al puntatore*/
+    shmidInit_ptr = (int *) shmat(shmidInit, NULL, 0);
+    if ((int *) shmidInit_ptr == (void *) (-1)) {
+        perror("shmat fail");
+        exit(EXIT_FAILURE);
+    }
+
+    STEP_ATTIVATORE = shmidInit_ptr[3];
+    printf("STEP_ATTIVATORE: %d\n", STEP_ATTIVATORE);
+    semid = shmidInit_ptr[10];
+    printf("semid: %d\n", semid);
+    shmidReport = shmidInit_ptr[9];
+    printf("shmidReport: %d\n", shmidReport);
+    shmid = shmidInit_ptr[8];
+    printf("shmid: %d\n", shmid);
+    msgid = shmidInit_ptr[11];
+    printf("msgid: %d\n", msgid);
+
+
+
+    /* detach memoria condivisa per init */
+    if (shmdt(shmidInit_ptr) == -1) {
+        perror("shmdt");
         exit(EXIT_FAILURE);
     }
 
 
-    STEP_ATTIVATORE = atoi(argv[1]);
-    SIM_DURATION = atoi(argv[2]);
-    shmid=atoi(argv[3]);
-    /*shmidReport=atoi(argv[4]);*/
 
  /*Collega la memoria condivisa Report al puntatore*/
-    /*shared_dump = (struct Dump *) shmat(shmidReport, NULL, 0);
+    shared_dump = (struct Dump *) shmat(shmidReport, NULL, 0);
     if ((struct Dump *) shared_dump == (struct Dump *) (-1)) {
         perror("shmat fail");
         exit(EXIT_FAILURE);
-    }*/
+    }
 
     /* Collega la memoria condivisa pids al puntatore*/
     puntatore_pids = (int*)shmat(shmid,NULL,0);
     if (puntatore_pids == (void *)-1) {
-        perror("shmat");
+        perror("shmat attivatore puntatore pids");
         return 1;
     }
 
@@ -57,126 +80,35 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
     printf("msgid sono in ATTIVATORE: %d\n",msgid);
-    /*TODO: FALSO COME GIUDA QUEL 3, LÌ CI VA IL CONTATORE DEI PID*/
-    while(/*puntatore_pids[i] != NULL*/ i < 3){
-        myMessage.msg_type = puntatore_pids[i];
-        num_bytes = sprintf(myMessage.msg_text, "scissione");
-        msgsnd(msgid, &myMessage, num_bytes, 0);
-        i++;
-        /*shared_dump->attivazione++;*/
+
+    /*detach memoria condivisa per array pid*/
+    if (shmdt(puntatore_pids) == -1) {
+        perror("shmdt");
+        exit(EXIT_FAILURE);
+    }
+
+    /* detach memoria condivisa dal processo */
+    if (shmdt(shared_dump) == -1) {
+        perror("shmdt");
+        exit(EXIT_FAILURE);
     }
 
 
-
-/*
-    while(current_second <= SIM_DURATION) {
-        if (current_second == STEP_ATTIVATORE) {
-
+    while(1) {
+        while (puntatore_pids[i] != NULL) {
+            myMessage.msg_type = puntatore_pids[1];
+            num_bytes = sprintf(myMessage.msg_text, "scissione");
+            msgsnd(msgid, &myMessage, num_bytes, 0);
+            P(1, semid);
+            shared_dump->attivazione = shared_dump->attivazione + 1;
+            printf("shared_dump->attivazione:  %d \n\n", shared_dump->attivazione);
+            V(1, semid);
+            i++;
         }
-        current_second++;
-    }
-    */
+        sleep(STEP_ATTIVATORE);
     }
 
 
 
 
-/*Capire questione del tempo, tutto qui commentato:*/
-/*
-int get_nano_sec() {
-	struct timespec ts;
-	if(clock_gettime(CLOCK_REALTIME, &ts) == -1) {
-		perror("clock_gettime");
-		exit(1);
-	}
-	return ts.tv_nsec;
 }
-
-int get_sec() {
-	struct timespec ts;
-	if(clock_gettime(CLOCK_REALTIME, &ts) == -1) {
-		perror("clock_gettime");
-		exit(1);
-	}
-	return ts.tv_sec;
-}
-
-int get_simulated_time() {
-	static int simulated_time = 0;
-	return simulated_time;
-}
-
-void activate_atoms(int msgid) {
-	int activation_time = get_nano_sec();
-
-	if (get_nano_sec() - activation_time == STEP_ATTIVATORE) {
-		send_message(msgid);
-		activation_time = get_nano_sec();
-	}
-}
-
-int main() {
-	printf("Attivatore creato!\n");
-   	printf("Attivatore_pid: %d\n", getpid());
-    printf("padre attivatore: %d\n", getppid());
-
-
-	int simulated_time_step = 1;
-	int activation_time = 5;
-	int messsage_atom = 0;
-	int msgid;
-    struct message myMessage;
-    int simulated_time;
-
-	msgid = msgget(MSGKEY, 0);
-    myMessage.msg_type = 1;
-    myMessage.msg_text = "scissione";
-
-    printf("Get simulated time: %d\n", get_simulated_time());
-
-	while (get_simulated_time() < SIM_DURATION) {
-		if (STEP_ATTIVATORE >= get_simulated_time()) {
-			msgsnd(msgid, &myMessage, sizeof(myMessage), 0);
-			printf("entra qui?");
-			messsage_atom = 1;
-		}
-		simulated_time += simulated_time_step;
-
-		struct timespec ts_sleep;
-		ts_sleep.tv_sec = simulated_time_step;
-		ts_sleep.tv_nsec = 0;
-
-		nanosleep(&ts_sleep, NULL);
-
-	}
-
-
-
-    int i;
-
-
-    struct timespec current_time;
-    clock_gettime(CLOCK_REALTIME, &current_time);
-    printf("time: %d\n", clock_gettime(CLOCK_REALTIME, &current_time));
-
-    double elapsed_time = difftime(current_time.tv_sec, TIME);
-    printf("elapsed_time: %f\n\n", elapsed_time);
-
-
-    printf("STEP_ATTIVATORE: %d\n", STEP_ATTIVATORE);
-    printf("activation_time: %d\n", &activation_time);
-
-    if(elapsed_time == STEP_ATTIVATORE) {
-    	printf("entra qui?");
-    }
-
-	if ( == STEP_ATTIVATORE) {
-		for (i = 0; i < N_ATOMI_INIT; i++) {
-			if (msgsnd(msgid, &myMessage, sizeof(myMessage), 0)) {
-				activation_time = get_nano_sec();
-				printf("entra qui?");
-			}
-		}
-	}
-
-} */

@@ -1,52 +1,46 @@
-#define _POSIX_C_SOURCE 200809L
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
 #include <sys/sem.h>
+#include <sys/stat.h>
 #include <sys/shm.h>
+#include <sys/wait.h>
 #include <time.h>
 #include <sys/msg.h>
+#include <signal.h>
 #include "lib/MacroUtil.h"
 #include "lib/Util.h"
 #include "lib/macro.h"
 #include "lib/GeneralUtils.h"
 
 
-
-
 int main(int argc, char *argv[]) {
+
     /**************************DICHIARAZIONI DI VARIABILI QUI !!*************************************************/
-    int i;
-    int pid_attivatore, pid_alimentazione;
+    int i, j;
     int N_ATOMI_INIT, ENERGY_DEMAND, MIN_N_ATOMICO, N_NUOVI_ATOMI, N_ATTIVATORE, N_ALIMENTAZIONE, N_ATOM_MAX, STEP_ALIMENTAZIONE, ENERGY_EXPLODE_THRESHOLD, SIM_DURATION, STEP_ATTIVATORE;
-    /*int atomi_pids[20]; array di pid degli atomi che dovrà esssere istanziato con malloc perchè variano i numeri degli atomi creati!*/
-    /*char *args1[4];
-    char *args2[5];
-    char *args3[6]; */
+    int pid_attivatore, pid_alimentazione;
     int current_second;
-    int semid, shmid, msgid, shmidReport;
+    int shmidInit, semid, shmid, msgid, shmidReport;
+    int *shmidInit_ptr;
     int *atomi_pids;
-    struct Dump dump = {0, 0, 0, 0, 0};
+    struct Dump dump;
     struct Dump *shared_dump;
 
     int numero_atomico; /*num spedito dal padre*/
     int num; /*num letto dall'atomo*/
     int file_pipe[2];
 
-    char buffer[10] = "";
-    char buffer2[10] = "";
-    char buffer3[10] = "";
-    char buffer4[10] = "";
-    char buffer5[10] = "";
-    char buffer6[10] = "";
-    char buffer7[10] = "";/*problemi con le dimennsioni del buffer per il dump*/
-    /*char *filePath_atomo = "atomo";
-    char *filePath_attivatore = "attivatore";
-    char *filePath_alimentazione = "alimentazione";*/
-
+    char buffer[10];
+    char buffer2[10];
+    char buffer3[10];
+    char buffer4[10];
+    char buffer5[10];
+    char buffer6[10];
+    char buffer7[10];
+    char buffer8[10];/*problemi con le dimennsioni del buffer per il dump*/
 
     /*************************************** LETTURA PARAMETRI *****************************************************/
     FILE *file = fopen("config_1.txt", "r");
@@ -64,23 +58,32 @@ int main(int argc, char *argv[]) {
     }
 
     fclose(file);
-
-    printf("SIM_DURATION %d\n\n", SIM_DURATION);
-
-    /*ora i parametri sono nelle variabili ma come faccio a passargli agli altri processi o a renderle visibili agli altri processi?
-     * */
-
-    /*idea: posso trasformare i parametri del file in char e poi riconvertirli in interi nei file dei processi!*/
+    /*************************************** FINE LETTURA PARAMETRI *****************************************************/
 
 
 
     /*************************************** CREAZIONE STRUTTURE *****************************************************/
+
     atomi_pids = malloc(N_ATOMI_INIT + N_NUOVI_ATOMI * sizeof(*atomi_pids));
 
+    /*Creazione memoria condivisa per passaggio parametri + ids*/
+    shmidInit = shmget(IPC_PRIVATE, sizeof(int) * (15) + 1, IPC_CREAT | 0666);
+    if (shmidInit == -1) {
+        fprintf(stderr, "%s: %d. Errore in shmget for shmidInit #%03d: %s\n", __FILE__, __LINE__, errno, strerror(errno));
+        exit(EXIT_FAILURE);
+    }
+
+    /*Collegamento memoria condivisa*/
+    shmidInit_ptr = (int*)shmat(shmidInit,NULL,0);
+    if (shmidInit_ptr == (void *)-1) {
+        perror("shmat");
+        return 1;
+    }
+
     /* Creazione MEMORIA CONDIVISA per array pid */
-    shmid = shmget(SHMKEY, sizeof(int) * (N_ATOMI_INIT + N_NUOVI_ATOMI), IPC_CREAT | 0666);
+    shmid = shmget(IPC_PRIVATE, sizeof(int) * (N_ATOMI_INIT + N_NUOVI_ATOMI), IPC_CREAT | 0666);
     if (shmid == -1) {
-        fprintf(stderr, "%s: %d. Errore in shmget #%03d: %s\n", __FILE__, __LINE__, errno, strerror(errno));
+        fprintf(stderr, "%s: %d. Errore in shmget for shmid #%03d: %s\n", __FILE__, __LINE__, errno, strerror(errno));
         exit(EXIT_FAILURE);
     }
     printf("....shmid sono in MASTER: %d\n", shmid);
@@ -105,12 +108,13 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    /* creazione SEMAFORO per scrittura e lettura */
-    semid = semget(SEMWRITEKEY, 1, IPC_CREAT | 0666);
+    /* creazione 2 SEMAFORO */
+    semid = semget(IPC_PRIVATE, 2, IPC_CREAT | 0666);
     if (semid == -1) {
         fprintf(stderr, "%s: %d. Errore in semget #%03d: %s\n", __FILE__, __LINE__, errno, strerror(errno));
         exit(EXIT_FAILURE);
     }
+    printf("....semid in MASTER: %d\n", semid);
 
 
     /* Creazione message queue */
@@ -121,59 +125,61 @@ int main(int argc, char *argv[]) {
     }
     printf("....msgid sono in MASTER: %d\n", msgid);
 
-
-
-
     /*************************************** FINE CREAZIONE STRUTTURE *****************************************************/
-    /* Proviamo a trasformare STEP_ATTIVATORE E SIM_DURATION! da int a char per passarli! */
 
 
-    /* Utilizza sprintf per convertire l'intero in una stringa */
+    /* Fill memoria condivisa */
+    shmidInit_ptr[0] = ENERGY_DEMAND;
+    shmidInit_ptr[1] = MIN_N_ATOMICO;
+    shmidInit_ptr[2] = ENERGY_EXPLODE_THRESHOLD;
+    shmidInit_ptr[3] = STEP_ATTIVATORE;
+    shmidInit_ptr[4] = SIM_DURATION;
+    shmidInit_ptr[5] = STEP_ALIMENTAZIONE;
+    shmidInit_ptr[6] = N_NUOVI_ATOMI;
+    shmidInit_ptr[7] = N_ATOM_MAX;
+    shmidInit_ptr[8] = shmid;
+    shmidInit_ptr[9] = shmidReport;
+    shmidInit_ptr[10] = semid;
+    shmidInit_ptr[11] = msgid;
+
+    sprintf(buffer, "%d", shmidInit);
+    char *args1[] = {"atomo",buffer, buffer2, NULL};
+    char *args2[] = {"attivatore",buffer, NULL};
+    char *args3[] = {"alimentazione",buffer, NULL};
+
+
+
+
+    /* Utilizza sprintf per convertire l'intero in una stringa
     sprintf(buffer, "%d", STEP_ATTIVATORE);
     sprintf(buffer2, "%d", SIM_DURATION);
     sprintf(buffer3, "%d", STEP_ALIMENTAZIONE);
     sprintf(buffer4, "%d", N_NUOVI_ATOMI);
     sprintf(buffer5, "%d", N_ATOM_MAX);
     sprintf(buffer6, "%d", shmid);
-    sprintf(buffer7, "%d", shared_dump);
+    sprintf(buffer7, "%d",shmidReport);
+    sprintf(buffer8, "&d", semid);
 
 
-    /*printf("Il numero intero come stringa: %s\n", buffer);*/
-    char *args1[] = {"atomo", buffer, buffer2, buffer,NULL};
-    char *args2[] = {"attivatore", buffer, buffer2, buffer6,/*buffer7*/NULL};
+    char *args1[] = {"atomo", buffer, NULL};
+    char *args2[] = {"attivatore", buffer, buffer2, buffer6,buffer7, buffer8, NULL};
     char *args3[] = {"alimentazione", buffer2, buffer3, buffer4, buffer5, NULL};
+     */
 
-    /*
-    args1[0] = "atomo";
-    args1[1] = buffer;
-    args1[2] = buffer2;
-    args1[3] = NULL;
-
-    args2[0] = "attivatore";
-    args2[1] = buffer;
-    args2[2] = buffer2;
-    args2[3] = buffer6;
-    args2[4] = NULL;
-
-    args3[0] = "alimentazione";
-    args3[1] = buffer2;
-    args3[2] = buffer3;
-    args3[3] = buffer4;
-    args3[4] = buffer5;
-    args3[5] = NULL; */
 
     srand(time(NULL));
 
+    /*Inizializzo semaforo per dump*/
+    sem_init(semid, 1, 1);
+
     /*inizializzo il semaforo*/
-    sem_init(semid, N_ATTIVATORE + N_ATOMI_INIT + N_ALIMENTAZIONE + 1);
+    sem_init(semid, N_ATTIVATORE + N_ATOMI_INIT + N_ALIMENTAZIONE + 1, 0);
     for (i = 0; i < N_ATOMI_INIT; i++) {
         if(pipe(file_pipe) == -1){
             perror("fail in pipe");
             exit(EXIT_FAILURE);
         }
 
-
-/**TODO: non é una doppia dichiarazione ? **/
 
         switch (fork()) {
             case -1:
@@ -190,7 +196,7 @@ int main(int argc, char *argv[]) {
                 printf("numero letto: %d per atomo con pid: %d\n", num, getpid());
                 close(file_pipe[0]);
                 TEST_ERROR
-                sprintf(args1[3], "%d", num); /*conversione a stringa*/
+                sprintf(args1[2], "%d", num); /*conversione a stringa*/
 
                 printf("!!!!LETTURA Atomo_pid da MASTER: %d\n", getpid());
                 atomi_pids[i]=getpid();
@@ -215,6 +221,7 @@ int main(int argc, char *argv[]) {
 
     close(file_pipe[1]);
 
+
     pid_attivatore = fork();
     switch (pid_attivatore) {
         case -1:
@@ -223,7 +230,6 @@ int main(int argc, char *argv[]) {
         case 0:
             sem_down(semid);
             printf("Attivatore con pid %d \n", getpid());
-
             printf("Attivatore waiting for zero...");
             sem_wait_for_zero(semid);
             if (execve("bin/attivatore", args2, NULL) == -1) {
@@ -271,11 +277,11 @@ int main(int argc, char *argv[]) {
         }*/
         /*************************** STATISTICHE (al sec) **********************************************************/
         printf("Secondo %d\n", current_second);
-        printf("Attivazioni dell'Attivatore: %d\n", dump.attivazione);
-        printf("Scissioni al secondo: %d\n", dump.scissione);
-        printf("Energia Prodotta al secondo: %d\n", dump.energia_prodotta);
-        printf("Energia Consumata al secondo: %d\n", dump.energia_consumata);
-        printf("Scorie prodotte al secondo: %d\n\n\n", dump.scoria_prodotta);
+        printf("Attivazioni dell'Attivatore: %d\n", shared_dump->attivazione);
+        printf("Scissioni al secondo: %d\n", shared_dump->scissione);
+        printf("Energia Prodotta al secondo: %d\n", shared_dump->energia_prodotta);
+        printf("Energia Consumata al secondo: %d\n", shared_dump->energia_consumata);
+        printf("Scorie prodotte al secondo: %d\n\n\n", shared_dump->scoria_prodotta);
 
         /*************************** STATISTICHE (totali) **********************************************************/
         /* In realtà vedi se dividere e se non c'è bisogno */
@@ -286,7 +292,7 @@ int main(int argc, char *argv[]) {
 
 
 
-    /* Rimozione dei semafori e della memoria condivisa */
+    /*------------------Rimozione dei semafori e della memoria condivisa---------------------------- */
 
     /*detach memoria condivisa per array pid*/
     if (shmdt(atomi_pids) == -1) {
@@ -300,7 +306,7 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    /* rimozione memoria condivisa */
+    /* rimozione memoria condivisa per dump */
     if (shmctl(shmidReport, IPC_RMID, NULL) == -1) {
         perror("shmctl");
         exit(EXIT_FAILURE);
@@ -308,6 +314,7 @@ int main(int argc, char *argv[]) {
 
 
     semctl(semid, 0, IPC_RMID);
+    semctl(semid, 1, IPC_RMID);
     shmctl(shmid, IPC_RMID, NULL);
     msgctl(msgid, IPC_RMID, NULL);
 
@@ -317,5 +324,3 @@ int main(int argc, char *argv[]) {
 
 
 }
-
-

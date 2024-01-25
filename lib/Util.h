@@ -28,8 +28,8 @@ typedef struct Dump{
 
 /*vediamo se serve anche quello totale*/
 
-int getRandomNumber(int lowerLimit, int upperLimit);
 
+int random_btw(int min, int max);
 void seedRandom(void);
 
 

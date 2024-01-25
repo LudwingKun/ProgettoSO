@@ -24,3 +24,6 @@ TODO: master ogni secondo stampa con un segnale (anche zero all'inizio)
 Struct atomo -> pid, numeroAtomico
 
 1 Coda di Messaggi -> Attivatore invia segnale di Scissione all'atomo
+
+MEMORIA CONDIVISA dove inseriamo i parametri, id memoria condivisa, coda di messaggi, semaforo
+9 parametri + idsemaforo + idcoda + idmemoriaPid + idmemoriaCondivisaDump

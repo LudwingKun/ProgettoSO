@@ -4,33 +4,53 @@
 #include <sys/msg.h>
 #include <sys/errno.h>
 #include <string.h>
+#include <sys/shm.h>
 #include "lib/macro.h"
 #include "lib/Util.h"
 #include "lib/MacroUtil.h"
 #include "lib/GeneralUtils.h"
 
 
-#define MIN_NUMERO_ATOMICO 3
 
 /*Funziona però meglio se si trova una maniera migliore di strutturare il codice perchè sono un sacco di parametri!!*/
 
 int main(int argc, char *argv[]) {
-    /*Primo atomo che trova prova a leggere dalla coda:*/
+    int MIN_N_ATOMICO;
     int msgid;
     int fd[2];
     struct message myMessage;
     int num_bytes;
-    int STEP_ATTIVATORE, SIM_DURATION;
-    int numero_atomico, num_figlo_i, num_figlio_r;
-    if (argc != 4) {
+    int numero_atomico, num_figlo_i, num_figlio_r, shmidInit;
+    int *shmidInit_ptr;
+
+    if (argc != 3) {
         fprintf(stderr, "Error, wrong number of argument for atomo\n");
         exit(EXIT_FAILURE);
     }
 
-    STEP_ATTIVATORE = atoi(argv[1]);
-    SIM_DURATION = atoi(argv[2]);
-    numero_atomico = atoi(argv[3]);
+    shmidInit = atoi(argv[1]);
+    numero_atomico = atoi(argv[2]);
     printf("numero atomico dell'atomo %d e' ==== %d\n", getpid(), numero_atomico);
+
+    /*Collega la memoria condivisa Init al puntatore*/
+    shmidInit_ptr = (int *) shmat(shmidInit, NULL, 0);
+    if ((int *) shmidInit_ptr == (void *) (-1)) {
+        perror("shmat fail");
+        exit(EXIT_FAILURE);
+    }
+
+    MIN_N_ATOMICO = shmidInit_ptr[1];
+    printf("MIN_N_ATOMICO: %d", MIN_N_ATOMICO);
+    msgid = shmidInit_ptr[11];
+    printf("msgid: %d", msgid);
+
+
+
+    /* detach memoria condivisa per array pid*/
+    if (shmdt(shmidInit_ptr) == -1) {
+        perror("shmdt");
+        exit(EXIT_FAILURE);
+    }
 
 
     msgid = msgget(MSGKEY, 0);
@@ -54,7 +74,7 @@ int main(int argc, char *argv[]) {
         }
         if (num_bytes > 0) {
             printf("messaggio ricevuto per pid %d: %s\n\n", getpid(), myMessage.msg_text);
-            if (numero_atomico < MIN_NUMERO_ATOMICO) {
+            if (numero_atomico < MIN_N_ATOMICO) {
                 printf("CHILD %d va in scorie e termina \n", getpid());
                 /*aggiornare DUMP*/
                 /**aggiornare il vettore di pid**/
@@ -85,6 +105,7 @@ int main(int argc, char *argv[]) {
         }
         num_bytes = 0;
     }
+
 }
 
 

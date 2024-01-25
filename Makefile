@@ -12,10 +12,10 @@ atomo: Atomo.c Makefile
 	gcc $(CFLAGS)  Atomo.c lib/GeneralUtils.c -o bin/atomo
 
 attivatore: Attivatore.c Makefile
-	gcc $(CFLAGS) Attivatore.c -o bin/attivatore
+	gcc $(CFLAGS) Attivatore.c lib/GeneralUtils.c -o bin/attivatore
 
 alimentazione: Alimentazione.c Makefile
-	gcc $(CFLAGS) Alimentazione.c -o bin/alimentazione
+	gcc $(CFLAGS) Alimentazione.c lib/GeneralUtils.c -o bin/alimentazione
 
 run:  all
 	./bin/master

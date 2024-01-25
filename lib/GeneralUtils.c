@@ -3,8 +3,8 @@
 #include "GeneralUtils.h"
 
 
-void sem_init(int sem_id, int val) {
-    if (semctl(sem_id, 0, SETVAL, val) == -1) {
+void sem_init(int sem_id, int val, int n) {
+    if (semctl(sem_id, n, SETVAL, val) == -1) {
         perror("semctl");
         exit(EXIT_FAILURE);
     }
@@ -34,20 +34,20 @@ void sem_wait_for_zero(int sem_id) {
     }
 }
 
-void P(int send_id, int n, int sem_id) {
+void P(int n,int sem_id){
     struct sembuf op;
-    op.sem_num = n;
-    op.sem_op = -1;
-    op.sem_flg = 0;
-    semop(sem_id, &op, 1);
+    op.sem_num=n;
+    op.sem_op=-1;
+    op.sem_flg=0;
+    semop(sem_id, &op,1);
 }
 
-void V(int send_id, int n, int sem_id) {
+void V(int n,int sem_id){
     struct sembuf op;
-    op.sem_num = n;
-    op.sem_op = 1;
-    op.sem_flg = 0;
-    semop(sem_id, &op, 1);
+    op.sem_num=n;
+    op.sem_op=1;
+    op.sem_flg=0;
+    semop(sem_id, &op,1);
 }
 
 void lettura_pipe(int fd[2], int *num) {

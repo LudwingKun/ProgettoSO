@@ -15,7 +15,7 @@
  * @param sem_id
  * @param val
  */
-void sem_init(int sem_id, int val);
+void sem_init(int sem_id, int val, int n);
 
 /**
  * questa funzione incrementa il valore del semaforo
@@ -53,9 +53,9 @@ void lettura_pipe(int fd[2], int *num);
  */
 void scrittura_pipe(int fd[2], int *num);
 
-void P(int send_id, int n,int sem_id);
+void P(int n, int sem_id);
 
-void V(int send_id, int n,int sem_id);
+void V(int n, int sem_id);
 
 /**
  *
