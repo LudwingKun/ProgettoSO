@@ -22,6 +22,7 @@ int main(int argc, char *argv[]) {
     int num_bytes;
     int numero_atomico, num_figlo_i, num_figlio_r, shmidInit;
     int *shmidInit_ptr;
+    int semid;
 
     if (argc != 3) {
         fprintf(stderr, "Error, wrong number of argument for atomo\n");
@@ -43,6 +44,7 @@ int main(int argc, char *argv[]) {
     printf("MIN_N_ATOMICO: %d", MIN_N_ATOMICO);
     msgid = shmidInit_ptr[11];
     printf("msgid: %d", msgid);
+    semid = shmidInit_ptr[10];
 
 
 
@@ -59,6 +61,9 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
     printf("msgid sono in atomo: %d\n", msgid);
+
+    printf("Atomo %d waiting for 0 before fire execve \n", getpid());
+    sem_wait_for_zero(semid);
 
     while (1) {
         num_bytes = 0;

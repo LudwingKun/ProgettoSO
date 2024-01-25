@@ -14,7 +14,7 @@
 int *puntatore_pids;
 struct Dump *shared_dump;
 
-void gestore_segnale(int segnale ) {
+void gestore_segnale() {
     /*detach memoria condivisa per array pid*/
         if (shmdt(puntatore_pids) == -1) {
             perror("shmdt");
@@ -91,6 +91,9 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
+    printf("Attivatore waiting for zero...");
+    sem_wait_for_zero(semid);
+
     printf("!!!!!LETTURA pid da ATTIVATORE: %d\n",puntatore_pids[0]);
     printf("!!!!!LETTURA pid da ATTIVATORE: %d\n",puntatore_pids[1]);
     printf("!!!!!LETTURA pid da ATTIVATORE: %d\n",puntatore_pids[2]);
@@ -104,9 +107,10 @@ int main(int argc, char *argv[]) {
     printf("msgid sono in ATTIVATORE: %d\n",msgid);
 
 
+
     while(1) {
         i=0;
-        while (puntatore_pids[i] != NULL) {
+        while (puntatore_pids[i] !=NULL) {
             myMessage.msg_type = puntatore_pids[i];
             num_bytes = sprintf(myMessage.msg_text, "scissione");
             msgsnd(msgid, &myMessage, num_bytes, 0);

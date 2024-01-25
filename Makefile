@@ -1,4 +1,4 @@
-CFLAGS = -std=c89 -pedantic -Wall -D_POSIX_C_SOURCE=200809L
+CFLAGS = -Wvla -Wextra  -D_POSIX_C_SOURCE=200809L
 
 all: master atomo attivatore alimentazione
 

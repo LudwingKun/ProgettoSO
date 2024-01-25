@@ -16,7 +16,7 @@
 #include "lib/GeneralUtils.h"
 
 
-int main(int argc, char *argv[]) {
+int main() {
 
     /**************************DICHIARAZIONI DI VARIABILI QUI !!*************************************************/
     int i, j;
@@ -202,8 +202,8 @@ int main(int argc, char *argv[]) {
                 printf("!!!!LETTURA Atomo_pid da MASTER: %d\n", getpid());
                 atomi_pids[i]=getpid();
 
-                printf("Atomo %d waiting for 0 before fire execve \n", getpid());
-                sem_wait_for_zero(semid);
+                /*printf("Atomo %d waiting for 0 before fire execve \n", getpid());
+                sem_wait_for_zero(semid);*/
                 if (execve("bin/atomo", args1, NULL) == -1) {
                     perror("execve");
                     exit(EXIT_FAILURE);
@@ -231,8 +231,8 @@ int main(int argc, char *argv[]) {
         case 0:
             sem_down(semid);
             printf("Attivatore con pid %d \n", getpid());
-            printf("Attivatore waiting for zero...");
-            sem_wait_for_zero(semid);
+            /*printf("Attivatore waiting for zero...");
+            sem_wait_for_zero(semid);*/
             if (execve("bin/attivatore", args2, NULL) == -1) {
                 perror("execve");
                 exit(EXIT_FAILURE);
@@ -252,8 +252,8 @@ int main(int argc, char *argv[]) {
         case 0:
             sem_down(semid);
             printf("Alimentazione con pid %d", getpid());
-            printf("Alimentazione waiting for zero");
-            sem_wait_for_zero(semid);
+            /*printf("Alimentazione waiting for zero");
+            sem_wait_for_zero(semid);*/
 
             if (execve("bin/alimentazione", args3, NULL) == -1) {
                 perror("execve");

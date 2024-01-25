@@ -4,6 +4,7 @@
 #include <time.h>
 #include <sys/shm.h>
 #include "lib/Util.h"
+#include "lib/GeneralUtils.h"
 
 void seedRandom(void) {
     struct timespec ts;
@@ -39,9 +40,13 @@ int main(int argc, char *argv[]) {
     int numero_atomico; /*num spedito dal padre*/
     int num; /*num letto dall'atomo*/
     int file_pipe[2];
-    int shmidInit;
+    int shmidInit,semid;
     int *shmidInit_ptr;
 
+    if (argc != 2) {
+        fprintf(stderr, "Error, wrong number of argument for atomo\n");
+        exit(EXIT_FAILURE);
+    }
 
     shmidInit = atoi(argv[1]);
 
@@ -57,6 +62,7 @@ int main(int argc, char *argv[]) {
     SIM_DURATION = shmidInit_ptr[4];
     N_NUOVI_ATOMI = shmidInit_ptr[6];
     N_ATOM_MAX = shmidInit_ptr[7];
+    semid = shmidInit_ptr[10];
 
 
     /* detach memoria condivisa per init */
@@ -71,6 +77,9 @@ int main(int argc, char *argv[]) {
 
 	printf("Sono dentro Alimentazione\n");
     printf("pid alimentazione! %d\n", getpid());
+
+    printf("Alimentazione waiting for zero");
+    sem_wait_for_zero(semid);
 
     current_second = 0;
     while(current_second <= SIM_DURATION) {
@@ -95,7 +104,7 @@ int main(int argc, char *argv[]) {
                         printf("numero letto: %d per atomo con pid: %d\n", num, getpid());
                         close(file_pipe[0]);
                         /*TEST_ERROR*/
-                        /*sprintf(args1[1], "%d", num); /*conversione a stringa
+                        /*sprintf(args1[1], "%d", num); conversione a stringa
                         printf("!!!!LETTURA Atomo_pid da ALIMENTAZIONE: %d\n", getpid());
                         if (execve("bin/atomo", args1, NULL) == -1) {
                             perror("execve");
