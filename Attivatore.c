@@ -81,22 +81,22 @@ int main(int argc, char *argv[]) {
     }
     printf("msgid sono in ATTIVATORE: %d\n",msgid);
 
-    /*detach memoria condivisa per array pid*/
+    /*detach memoria condivisa per array pid
     if (shmdt(puntatore_pids) == -1) {
         perror("shmdt");
         exit(EXIT_FAILURE);
-    }
+    }*/
 
-    /* detach memoria condivisa dal processo */
+    /* detach memoria condivisa dal processo
     if (shmdt(shared_dump) == -1) {
         perror("shmdt");
         exit(EXIT_FAILURE);
-    }
+    }*/
 
 
     while(1) {
         while (puntatore_pids[i] != NULL) {
-            myMessage.msg_type = puntatore_pids[1];
+            myMessage.msg_type = puntatore_pids[i];
             num_bytes = sprintf(myMessage.msg_text, "scissione");
             msgsnd(msgid, &myMessage, num_bytes, 0);
             P(1, semid);
