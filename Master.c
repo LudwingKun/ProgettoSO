@@ -29,6 +29,7 @@ int main(int argc, char *argv[]) {
     struct Dump dump;
     struct Dump *shared_dump;
 
+
     int numero_atomico; /*num spedito dal padre*/
     int num; /*num letto dall'atomo*/
     int file_pipe[2];
@@ -288,7 +289,25 @@ int main(int argc, char *argv[]) {
         sleep(1);
     }
 
-    sleep(5); /*Questa sleep serve sennò il master finisce prima degli altri processi*/
+    //sigemtyset
+
+    if (kill(pid_attivatore, SIGTERM) == 0) {
+        printf("Segnale di terminazione inviato al processo con PID %d\n", pid_attivatore);
+    } else {
+        perror("Errore durante l'invio del segnale");
+        return 1;
+    }
+
+    if (kill(pid_alimentazione, SIGTERM) == 0) {
+        printf("Segnale di terminazione inviato al processo con PID %d\n", pid_alimentazione);
+    } else {
+        perror("Errore durante l'invio del segnale");
+        return 1;
+    }
+
+
+
+sleep(5); /*Questa sleep serve sennò il master finisce prima degli altri processi*/
 
 
 

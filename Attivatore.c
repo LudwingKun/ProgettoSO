@@ -9,17 +9,39 @@
 #include "lib/Util.h"
 #include "lib/GeneralUtils.h"
 #include <sys/shm.h>
+#include <signal.h>
 
+int *puntatore_pids;
+struct Dump *shared_dump;
+
+void gestore_segnale(int segnale ) {
+    /*detach memoria condivisa per array pid*/
+        if (shmdt(puntatore_pids) == -1) {
+            perror("shmdt");
+            exit(EXIT_FAILURE);
+        }
+
+    /* detach memoria condivisa dal processo*/
+    if (shmdt(shared_dump) == -1) {
+        perror("shmdt");
+        exit(EXIT_FAILURE);
+    }
+    printf("Detach in attivatore avvenuto");
+    exit(EXIT_SUCCESS);
+}
 
 int main(int argc, char *argv[]) {
     int msgid, shmid, shmidReport,i=0;
     struct message myMessage;
     int shmidInit, STEP_ATTIVATORE;
     int *shmidInit_ptr;
-    int *puntatore_pids;
-    struct Dump *shared_dump;
     int num_bytes;
     int semid;
+    struct sigaction sa;
+    sa.sa_handler = gestore_segnale;
+    sigaction(SIGTERM, &sa, NULL);
+
+
 
     if (argc != 2) {
         fprintf(stderr, "Error, wrong number of argument for atomo\n");
@@ -83,27 +105,19 @@ int main(int argc, char *argv[]) {
 
 
     while(1) {
+        i=0;
         while (puntatore_pids[i] != NULL) {
             myMessage.msg_type = puntatore_pids[i];
             num_bytes = sprintf(myMessage.msg_text, "scissione");
             msgsnd(msgid, &myMessage, num_bytes, 0);
             P(1, semid);
             shared_dump->attivazione = shared_dump->attivazione + 1;
-            printf("shared_dump->attivazione:  %d \n\n", shared_dump->attivazione);
             V(1, semid);
             i++;
         }
         sleep(STEP_ATTIVATORE);
-        /*detach memoria condivisa per array pid*/
-        if (shmdt(puntatore_pids) == -1) {
-            perror("shmdt");
-            exit(EXIT_FAILURE);
-        }
 
-        /* detach memoria condivisa dal processo */
-        if (shmdt(shared_dump) == -1) {
-            perror("shmdt");
-            exit(EXIT_FAILURE);
-        }
     }
+
+
 }

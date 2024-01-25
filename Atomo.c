@@ -61,8 +61,9 @@ int main(int argc, char *argv[]) {
     printf("msgid sono in atomo: %d\n", msgid);
 
     while (1) {
+        num_bytes = 0;
         num_bytes = msgrcv(msgid, &myMessage, 100, getpid(), 0); /*1 sarebbe il tipo del messaggio */
-        if (num_bytes == -1) {
+        if (num_bytes < 0) {
             if (errno == ENOMSG) {
                 printf("CHILD %d: nessun messaggio di quel tipo", getpid());
                 sleep(2);
@@ -103,7 +104,7 @@ int main(int argc, char *argv[]) {
             }
             close(fd[1]);
         }
-        num_bytes = 0;
+
     }
 
 }
