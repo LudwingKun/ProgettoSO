@@ -1,4 +1,4 @@
-CFLAGS = -std=c89 -pedantic -Wall
+CFLAGS = -std=c89 -pedantic -Wall -D_POSIX_C_SOURCE=200809L
 
 all: master atomo attivatore alimentazione
 
@@ -9,7 +9,7 @@ master: Master.c Makefile
 	gcc $(CFLAGS) Master.c lib/GeneralUtils.c  -o bin/master
 
 atomo: Atomo.c Makefile
-	gcc $(CFLAGS) Atomo.c -o bin/atomo
+	gcc $(CFLAGS)  Atomo.c lib/GeneralUtils.c -o bin/atomo
 
 attivatore: Attivatore.c Makefile
 	gcc $(CFLAGS) Attivatore.c -o bin/attivatore

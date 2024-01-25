@@ -6,19 +6,15 @@
 #include <errno.h>
 #include <string.h>
 #include <sys/sem.h>
-#include <sys/stat.h>
 #include <sys/shm.h>
-#include <sys/wait.h>
 #include <time.h>
 #include <sys/msg.h>
-#include <signal.h>
 #include "lib/MacroUtil.h"
 #include "lib/Util.h"
 #include "lib/macro.h"
 #include "lib/GeneralUtils.h"
 
 
-int random_btw(int min, int max);
 
 
 int main(int argc, char *argv[]) {
@@ -40,13 +36,13 @@ int main(int argc, char *argv[]) {
     int num; /*num letto dall'atomo*/
     int file_pipe[2];
 
-    char buffer[10];
-    char buffer2[10];
-    char buffer3[10];
-    char buffer4[10];
-    char buffer5[10];
-    char buffer6[10];
-    char buffer7[10];/*problemi con le dimennsioni del buffer per il dump*/
+    char buffer[10] = "";
+    char buffer2[10] = "";
+    char buffer3[10] = "";
+    char buffer4[10] = "";
+    char buffer5[10] = "";
+    char buffer6[10] = "";
+    char buffer7[10] = "";/*problemi con le dimennsioni del buffer per il dump*/
     /*char *filePath_atomo = "atomo";
     char *filePath_attivatore = "attivatore";
     char *filePath_alimentazione = "alimentazione";*/
@@ -178,8 +174,8 @@ int main(int argc, char *argv[]) {
 
 
 /**TODO: non é una doppia dichiarazione ? **/
-        atomi_pids[i] = fork();
-        switch (atomi_pids[i]) {
+
+        switch (fork()) {
             case -1:
                 perror("fork fail for atom");
                 exit(EXIT_FAILURE);
@@ -218,10 +214,6 @@ int main(int argc, char *argv[]) {
     }
 
     close(file_pipe[1]);
-
-    for (i = 0; i < N_ATOMI_INIT; i++) {
-        printf("Atomo %d: %d\n", i, atomi_pids[i]);
-    }
 
     pid_attivatore = fork();
     switch (pid_attivatore) {
@@ -327,4 +319,3 @@ int main(int argc, char *argv[]) {
 }
 
 
-int random_btw(int min, int max){ return rand() % (max - min + 1) + min; }

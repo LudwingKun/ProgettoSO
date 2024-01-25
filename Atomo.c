@@ -1,25 +1,27 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <stdarg.h>
-
 #include <sys/msg.h>
 #include <sys/errno.h>
 #include <string.h>
 #include "lib/macro.h"
 #include "lib/Util.h"
 #include "lib/MacroUtil.h"
+#include "lib/GeneralUtils.h"
+
+
+#define MIN_NUMERO_ATOMICO 3
 
 /*Funziona però meglio se si trova una maniera migliore di strutturare il codice perchè sono un sacco di parametri!!*/
 
 int main(int argc, char *argv[]) {
     /*Primo atomo che trova prova a leggere dalla coda:*/
     int msgid;
+    int fd[2];
     struct message myMessage;
     int num_bytes;
     int STEP_ATTIVATORE, SIM_DURATION;
-    int numero_atomico;
-
+    int numero_atomico, num_figlo_i, num_figlio_r;
     if (argc != 4) {
         fprintf(stderr, "Error, wrong number of argument for atomo\n");
         exit(EXIT_FAILURE);
@@ -40,28 +42,52 @@ int main(int argc, char *argv[]) {
 
     while (1) {
         num_bytes = msgrcv(msgid, &myMessage, 100, getpid(), 0); /*1 sarebbe il tipo del messaggio */
-        if(num_bytes == -1){
-            if(errno == ENOMSG){
+        if (num_bytes == -1) {
+            if (errno == ENOMSG) {
                 printf("CHILD %d: nessun messaggio di quel tipo", getpid());
                 sleep(2);
                 continue;
-            } else{
+            } else {
                 printf("Errore n %d: %s", errno, strerror(errno));
                 exit(EXIT_FAILURE);
             }
-        }else break;
+        }
+        if (num_bytes > 0) {
+            printf("messaggio ricevuto per pid %d: %s\n\n", getpid(), myMessage.msg_text);
+            if (numero_atomico < MIN_NUMERO_ATOMICO) {
+                printf("CHILD %d va in scorie e termina \n", getpid());
+                /*aggiornare DUMP*/
+                /**aggiornare il vettore di pid**/
+                exit(EXIT_SUCCESS);
+            }
+            if (pipe(fd) == -1) {
+                perror("fail in pipe");
+                TEST_ERROR
+                exit(EXIT_FAILURE);
+            }
+            switch (fork()) {
+                case -1:
+                    TEST_ERROR
+                    exit(EXIT_FAILURE);
+                case 0:
+                    printf("CHILD %d divisione da atomo : %d  \n ", getpid(), getppid());
+                    lettura_pipe(fd, &num_figlio_r);
+                    /**aggiornare DUMP**/
+                    printf("CHILD %d con numero atomico : %d \n", getpid(), num_figlio_r);
+                    break;
+                default:
+                    num_figlo_i = numero_atomico - numero_atomico / 2;
+                    numero_atomico = numero_atomico - num_figlo_i;
+                    scrittura_pipe(fd, &num_figlo_i);
+                    break;
+            }
+            close(fd[1]);
+        }
+        num_bytes = 0;
     }
-    printf("messaggio ricevuto per pid %d: %s\n\n",getpid(),  myMessage.msg_text);
 }
 
 
 
-
-/*msgid = msgget(MSGKEY, 0);
-myMessage.msg_type = 1;
-myMessage.msg_text = "scissione";
-msgrcv(msgid, &myMessage, sizeof(myMessage), 1, 0);1 sarebbe il tipo del messaggio!
-
-printf("messaggio ricevuto: %s\n\n", myMessage.msg_text); */
 
 

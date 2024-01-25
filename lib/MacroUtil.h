@@ -1,4 +1,3 @@
-
 #ifndef PROGETTOSO_MACROUTIL_H
 #define PROGETTOSO_MACROUTIL_H
 #include <stdio.h>

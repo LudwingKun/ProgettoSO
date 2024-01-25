@@ -58,7 +58,7 @@ int main(int argc, char *argv[]) {
     }
     printf("msgid sono in ATTIVATORE: %d\n",msgid);
     /*TODO: FALSO COME GIUDA QUEL 3, LÌ CI VA IL CONTATORE DEI PID*/
-    while(puntatore_pids[i] != NULL){
+    while(/*puntatore_pids[i] != NULL*/ i < 3){
         myMessage.msg_type = puntatore_pids[i];
         num_bytes = sprintf(myMessage.msg_text, "scissione");
         msgsnd(msgid, &myMessage, num_bytes, 0);

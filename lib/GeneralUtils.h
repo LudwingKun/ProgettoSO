@@ -39,11 +39,31 @@ void sem_down(int sem_id);
  * @param sem_id
  */
 void sem_wait_for_zero(int sem_id);
-
+/**
+ * funzione che svolge le operazioni di lettura da una pipe
+ * e salva il contenuto nella variabile intera num
+ * @param fd
+ * @param num
+ */
+void lettura_pipe(int fd[2], int *num);
+/**
+ * scrive sulla pipe l'intero passatogli
+ * @param fd
+ * @param num
+ */
+void scrittura_pipe(int fd[2], int *num);
 
 void P(int send_id, int n,int sem_id);
 
 void V(int send_id, int n,int sem_id);
+
+/**
+ *
+ * @param min
+ * @param max
+ * @return numero intro random tra min e max inclusi
+ */
+int random_btw(int min, int max);
 
 
 #endif

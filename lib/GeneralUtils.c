@@ -34,20 +34,35 @@ void sem_wait_for_zero(int sem_id) {
     }
 }
 
-void P(int send_id, int n,int sem_id){
+void P(int send_id, int n, int sem_id) {
     struct sembuf op;
-    op.sem_num=n;
-    op.sem_op=-1;
-    op.sem_flg=0;
-    semop(sem_id, &op,1);
+    op.sem_num = n;
+    op.sem_op = -1;
+    op.sem_flg = 0;
+    semop(sem_id, &op, 1);
 }
 
-void V(int send_id, int n,int sem_id){
+void V(int send_id, int n, int sem_id) {
     struct sembuf op;
-    op.sem_num=n;
-    op.sem_op=1;
-    op.sem_flg=0;
-    semop(sem_id, &op,1);
+    op.sem_num = n;
+    op.sem_op = 1;
+    op.sem_flg = 0;
+    semop(sem_id, &op, 1);
+}
+
+void lettura_pipe(int fd[2], int *num) {
+    close(fd[1]); /*chiusura lato scrittura*/
+    read(fd[0], num, sizeof(int));
+    close(fd[0]);
+}
+
+void scrittura_pipe(int fd[2], int *num) {
+    close(fd[0]); /*chiusrua lato lettura*/
+    write(fd[1], num, sizeof(int));
+
 }
 
 
+int random_btw(int min, int max) {
+    return rand() % (max - min + 1) + min;
+}
