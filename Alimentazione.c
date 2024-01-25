@@ -43,16 +43,6 @@ int main(int argc, char *argv[]) {
     int shmidInit;
     int *shmidInit_ptr;
 
-    /*if (argc != 5) {
-        fprintf(stderr, "Error, wrong number of argument for alimentazione\n");
-        exit(EXIT_FAILURE);
-    }
-
-    SIM_DURATION = atoi(argv[1]);
-    STEP_ALIMENTAZIONE = atoi(argv[2]);
-    N_NUOVI_ATOMI = atoi(argv[3]);
-    N_ATOM_MAX = atoi(argv[4]);*/
-
 
     shmidInit = atoi(argv[1]);
 

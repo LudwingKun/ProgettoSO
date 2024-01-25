@@ -55,7 +55,7 @@ int main(int argc, char *argv[]) {
 
 
 
- /*Collega la memoria condivisa Report al puntatore*/
+    /*Collega la memoria condivisa Report al puntatore*/
     shared_dump = (struct Dump *) shmat(shmidReport, NULL, 0);
     if ((struct Dump *) shared_dump == (struct Dump *) (-1)) {
         perror("shmat fail");

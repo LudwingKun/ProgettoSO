@@ -300,8 +300,14 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    /* detach memoria condivisa dal processo */
+    /* detach memoria condivisa dal processo per dump */
     if (shmdt(shared_dump) == -1) {
+        perror("shmdt");
+        exit(EXIT_FAILURE);
+    }
+
+    /* detach memoria condivisa dal processo per Init */
+    if (shmdt(shmidInit_ptr) == -1) {
         perror("shmdt");
         exit(EXIT_FAILURE);
     }
@@ -316,6 +322,7 @@ int main(int argc, char *argv[]) {
     semctl(semid, 0, IPC_RMID);
     semctl(semid, 1, IPC_RMID);
     shmctl(shmid, IPC_RMID, NULL);
+    shmctl(shmidInit, IPC_RMID, NULL);
     msgctl(msgid, IPC_RMID, NULL);
 
     printf("END!\n");
