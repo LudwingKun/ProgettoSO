@@ -1,4 +1,3 @@
-#define _POSIX_C_SOURCE 200809L
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -34,7 +33,7 @@ int getRandomNumber(int lowerLimit, int upperLimit) { /*questa va chiamata con l
 int main(int argc, char *argv[]) {
     int i;
     int atomi_alimentatore[10];
-    int current_second = 0;
+    int current_second;
     int SIM_DURATION, STEP_ALIMENTAZIONE, N_NUOVI_ATOMI, N_ATOM_MAX;
     char buffer[10];
     int numero_atomico; /*num spedito dal padre*/
@@ -73,6 +72,7 @@ int main(int argc, char *argv[]) {
 	printf("Sono dentro Alimentazione\n");
     printf("pid alimentazione! %d\n", getpid());
 
+    current_second = 0;
     while(current_second <= SIM_DURATION) {
         if (current_second == STEP_ALIMENTAZIONE) {
             printf("Alimentazione deve creare atomi! sono al secondo: %d\n\n\n", current_second);
@@ -114,6 +114,7 @@ int main(int argc, char *argv[]) {
                 }
             }
             close(file_pipe[1]);
+            STEP_ALIMENTAZIONE = STEP_ALIMENTAZIONE*2;
         }
         current_second++;
     }

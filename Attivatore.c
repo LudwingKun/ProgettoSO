@@ -81,18 +81,6 @@ int main(int argc, char *argv[]) {
     }
     printf("msgid sono in ATTIVATORE: %d\n",msgid);
 
-    /*detach memoria condivisa per array pid
-    if (shmdt(puntatore_pids) == -1) {
-        perror("shmdt");
-        exit(EXIT_FAILURE);
-    }*/
-
-    /* detach memoria condivisa dal processo
-    if (shmdt(shared_dump) == -1) {
-        perror("shmdt");
-        exit(EXIT_FAILURE);
-    }*/
-
 
     while(1) {
         while (puntatore_pids[i] != NULL) {
@@ -106,9 +94,16 @@ int main(int argc, char *argv[]) {
             i++;
         }
         sleep(STEP_ATTIVATORE);
+        /*detach memoria condivisa per array pid*/
+        if (shmdt(puntatore_pids) == -1) {
+            perror("shmdt");
+            exit(EXIT_FAILURE);
+        }
+
+        /* detach memoria condivisa dal processo */
+        if (shmdt(shared_dump) == -1) {
+            perror("shmdt");
+            exit(EXIT_FAILURE);
+        }
     }
-
-
-
-
 }
