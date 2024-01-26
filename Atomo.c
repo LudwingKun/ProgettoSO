@@ -1,10 +1,3 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <sys/msg.h>
-#include <sys/errno.h>
-#include <string.h>
-#include <sys/shm.h>
 #include "lib/MacroUtil.h"
 #include "lib/GeneralUtils.h"
 
@@ -43,9 +36,7 @@ int main(int argc, char *argv[]) {
     }
 
     MIN_N_ATOMICO = shmidInit_ptr[1];
-    printf("MIN_N_ATOMICO: %d\n", MIN_N_ATOMICO);
     msgid = shmidInit_ptr[11];
-    printf("msgid sono in atomo: %d \n", msgid);
     semid = shmidInit_ptr[10];
     pids_id = shmidInit_ptr[8];
     dump_id = shmidInit_ptr[9];
@@ -83,7 +74,7 @@ int main(int argc, char *argv[]) {
             }
         }
         if (num_bytes > 0) {
-            printf("messaggio ricevuto per pid %d: %s\n\n", getpid(), myMessage.msg_text);
+            /*printf("messaggio ricevuto per pid %d: %s\n\n", getpid(), myMessage.msg_text);*/
             if (numero_atomico < MIN_N_ATOMICO) {
                 printf("CHILD %d va in scorie e termina \n", getpid());
                 P(5, semid);

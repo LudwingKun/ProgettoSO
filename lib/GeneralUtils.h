@@ -6,6 +6,14 @@
 #include <time.h>
 #include "MacroUtil.h"
 
+#include <signal.h>
+#include <sys/msg.h>
+#include <sys/errno.h>
+#include <string.h>
+#include <sys/wait.h>
+#include <sys/shm.h>
+
+
 #ifndef PROGETTOSO_LIBSEMAFORI_H
 #define PROGETTOSO_LIBSEMAFORI_H
                 /*************************************SEMAFORI***********************************************/
