@@ -12,23 +12,10 @@
 #include <signal.h>
 
 int *puntatore_pids;
-struct Dump *shared_dump;
+struct Dump *dump_ptr;
 
-void gestore_segnale() {
-    /*detach memoria condivisa per array pid*/
-        if (shmdt(puntatore_pids) == -1) {
-            perror("shmdt");
-            exit(EXIT_FAILURE);
-        }
 
-    /* detach memoria condivisa dal processo*/
-    if (shmdt(shared_dump) == -1) {
-        perror("shmdt");
-        exit(EXIT_FAILURE);
-    }
-    printf("Detach in attivatore avvenuto");
-    exit(EXIT_SUCCESS);
-}
+
 
 int main(int argc, char *argv[]) {
     int msgid, shmid, shmidReport,i=0;
@@ -78,8 +65,8 @@ int main(int argc, char *argv[]) {
 
 
     /*Collega la memoria condivisa Report al puntatore*/
-    shared_dump = (struct Dump *) shmat(shmidReport, NULL, 0);
-    if ((struct Dump *) shared_dump == (struct Dump *) (-1)) {
+    dump_ptr = (struct Dump *) shmat(shmidReport, NULL, 0);
+    if ((struct Dump *) dump_ptr == (struct Dump *) (-1)) {
         perror("shmat fail");
         exit(EXIT_FAILURE);
     }
@@ -107,7 +94,7 @@ int main(int argc, char *argv[]) {
     printf("msgid sono in ATTIVATORE: %d\n",msgid);
 
 
-
+    sleep(STEP_ATTIVATORE);
     while(1) {
         i=0;
         while (puntatore_pids[i] !=NULL) {
@@ -115,7 +102,7 @@ int main(int argc, char *argv[]) {
             num_bytes = sprintf(myMessage.msg_text, "scissione");
             msgsnd(msgid, &myMessage, num_bytes, 0);
             P(1, semid);
-            shared_dump->attivazione = shared_dump->attivazione + 1;
+            dump_ptr->attivazione = dump_ptr->attivazione + 1;
             V(1, semid);
             i++;
         }
@@ -124,4 +111,24 @@ int main(int argc, char *argv[]) {
     }
 
 
+}
+
+
+
+
+
+void gestore_segnale() {
+    /*detach memoria condivisa per array pid*/
+    if (shmdt(puntatore_pids) == -1) {
+        perror("shmdt");
+        exit(EXIT_FAILURE);
+    }
+
+    /* detach memoria condivisa dal processo*/
+    if (shmdt(dump_ptr) == -1) {
+        perror("shmdt");
+        exit(EXIT_FAILURE);
+    }
+    printf("Detach in attivatore avvenuto");
+    exit(EXIT_SUCCESS);
 }

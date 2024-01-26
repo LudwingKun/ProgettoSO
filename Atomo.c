@@ -12,8 +12,10 @@
 
 
 
-/*Funziona però meglio se si trova una maniera migliore di strutturare il codice perchè sono un sacco di parametri!!*/
-
+/*Funziona però meglio se si trova una maniera migliore di strutturare il
+ * codice perchè sono un sacco di parametri!!*/
+struct Dump* dump_ptr;
+int *pids_ptr;
 int main(int argc, char *argv[]) {
     int MIN_N_ATOMICO;
     int msgid;
@@ -23,6 +25,10 @@ int main(int argc, char *argv[]) {
     int numero_atomico, num_figlo_i, num_figlio_r, shmidInit;
     int *shmidInit_ptr;
     int semid;
+    int pids_id;
+    int dump_id;
+    int pos;
+
 
     if (argc != 3) {
         fprintf(stderr, "Error, wrong number of argument for atomo\n");
@@ -45,9 +51,19 @@ int main(int argc, char *argv[]) {
     msgid = shmidInit_ptr[11];
     printf("msgid: %d", msgid);
     semid = shmidInit_ptr[10];
+    pids_id = shmidInit_ptr[8];
+    dump_id = shmidInit_ptr[9];
 
-
-
+    pids_ptr = (int *) shmat(pids_id, NULL, 0);
+    if ((int *) pids_ptr == (void *) (-1)) {
+        perror("shmat fail");
+        exit(EXIT_FAILURE);
+    }
+    dump_ptr = (struct Dump *) shmat(dump_id, NULL, 0);
+    if ((struct Dump *) dump_ptr == (struct Dump *) (-1)) {
+        perror("shmat fail");
+        exit(EXIT_FAILURE);
+    }
     /* detach memoria condivisa per array pid*/
     if (shmdt(shmidInit_ptr) == -1) {
         perror("shmdt");
@@ -82,8 +98,17 @@ int main(int argc, char *argv[]) {
             printf("messaggio ricevuto per pid %d: %s\n\n", getpid(), myMessage.msg_text);
             if (numero_atomico < MIN_N_ATOMICO) {
                 printf("CHILD %d va in scorie e termina \n", getpid());
-                /*aggiornare DUMP*/
-                /**aggiornare il vettore di pid**/
+                P(5, semid);
+                dump_ptr->scoria_prodotta++;
+                V(5, semid);
+
+                P(6, semid);
+                pos = trova_pos(pids_ptr, &dump_ptr->contatore_atomi, getpid());
+                printf("DIM VETTORE prima : %d \n", dump_ptr->contatore_atomi);
+                printf("POS TROVATA .%d \n", pos);
+                rimuovi_elemento(pids_ptr, &dump_ptr->contatore_atomi, pos);
+                printf("DIM VETTORE: %d \n", dump_ptr->contatore_atomi);
+                V(6, semid);
                 exit(EXIT_SUCCESS);
             }
             if (pipe(fd) == -1) {
@@ -115,6 +140,21 @@ int main(int argc, char *argv[]) {
 }
 
 
+void gestore_segnale() {
+    /*detach memoria condivisa per array pid*/
+    if (shmdt(pids_ptr) == -1) {
+        perror("shmdt");
+        exit(EXIT_FAILURE);
+    }
+
+    /* detach memoria condivisa dal processo*/
+    if (shmdt(dump_ptr) == -1) {
+        perror("shmdt");
+        exit(EXIT_FAILURE);
+    }
+    printf("Detach in attivatore avvenuto");
+    exit(EXIT_SUCCESS);
+}
 
 
 

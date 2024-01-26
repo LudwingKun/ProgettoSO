@@ -24,6 +24,7 @@ typedef struct Dump{
     int energia_prodotta;
     int energia_consumata;
     int scoria_prodotta;
+    int contatore_atomi;
 }dump;
 
 /*vediamo se serve anche quello totale*/

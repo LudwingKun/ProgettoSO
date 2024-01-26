@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <time.h>
+#include "MacroUtil.h"
 
 #ifndef PROGETTOSO_LIBSEMAFORI_H
 #define PROGETTOSO_LIBSEMAFORI_H
@@ -64,6 +65,23 @@ void V(int n, int sem_id);
  * @return numero intro random tra min e max inclusi
  */
 int random_btw(int min, int max);
+/**
+ * la funzione rimuove, facendo uso di un semaforo, l'elemento
+ * alla posizione indicata e riscala il vettore
+ * @param array
+ * @param dimensione
+ * @param posizione
+ */
+void rimuovi_elemento(int array[], int *dimensione, int posizione);
+/**
+ * la funzione trova la posizione del pid corrispondente
+ * @param array
+ * @param dimensione
+ * @param pid
+ * @return posizione corrispondente
+ */
+int trova_pos(int array[], int *dimensione, pid_t pid);
 
 
+void gestore_segnale();
 #endif
