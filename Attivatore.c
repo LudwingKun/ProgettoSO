@@ -5,8 +5,6 @@
 #include <sys/msg.h>
 #include <sys/errno.h>
 #include <string.h>
-#include "lib/macro.h"
-#include "lib/Util.h"
 #include "lib/GeneralUtils.h"
 #include <sys/shm.h>
 #include <signal.h>
@@ -27,7 +25,6 @@ int main(int argc, char *argv[]) {
     struct sigaction sa;
     sa.sa_handler = gestore_segnale;
     sigaction(SIGTERM, &sa, NULL);
-
 
 
     if (argc != 2) {
@@ -86,11 +83,6 @@ int main(int argc, char *argv[]) {
     printf("!!!!!LETTURA pid da ATTIVATORE: %d\n",puntatore_pids[2]);
     
 
-    msgid = msgget(MSGKEY, 0);
-    if (msgid == -1) {
-        fprintf(stderr, "%s: %d. Errore in msgget #%03d: %s\n", __FILE__, __LINE__, errno, strerror(errno));
-        exit(EXIT_FAILURE);
-    }
     printf("msgid sono in ATTIVATORE: %d\n",msgid);
 
 
@@ -129,6 +121,6 @@ void gestore_segnale() {
         perror("shmdt");
         exit(EXIT_FAILURE);
     }
-    printf("Detach in attivatore avvenuto");
+    printf("Detach in attivatore avvenuto\n");
     exit(EXIT_SUCCESS);
 }

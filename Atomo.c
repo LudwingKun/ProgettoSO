@@ -5,17 +5,13 @@
 #include <sys/errno.h>
 #include <string.h>
 #include <sys/shm.h>
-#include "lib/macro.h"
-#include "lib/Util.h"
 #include "lib/MacroUtil.h"
 #include "lib/GeneralUtils.h"
 
-
-
-/*Funziona però meglio se si trova una maniera migliore di strutturare il
- * codice perchè sono un sacco di parametri!!*/
 struct Dump* dump_ptr;
 int *pids_ptr;
+
+
 int main(int argc, char *argv[]) {
     int MIN_N_ATOMICO;
     int msgid;
@@ -47,9 +43,9 @@ int main(int argc, char *argv[]) {
     }
 
     MIN_N_ATOMICO = shmidInit_ptr[1];
-    printf("MIN_N_ATOMICO: %d", MIN_N_ATOMICO);
+    printf("MIN_N_ATOMICO: %d\n", MIN_N_ATOMICO);
     msgid = shmidInit_ptr[11];
-    printf("msgid: %d", msgid);
+    printf("msgid sono in atomo: %d \n", msgid);
     semid = shmidInit_ptr[10];
     pids_id = shmidInit_ptr[8];
     dump_id = shmidInit_ptr[9];
@@ -69,14 +65,6 @@ int main(int argc, char *argv[]) {
         perror("shmdt");
         exit(EXIT_FAILURE);
     }
-
-
-    msgid = msgget(MSGKEY, 0);
-    if (msgid == -1) {
-        fprintf(stderr, "%s: %d. Errore in msgget #%03d: %s\n", __FILE__, __LINE__, errno, strerror(errno));
-        exit(EXIT_FAILURE);
-    }
-    printf("msgid sono in atomo: %d\n", msgid);
 
     printf("Atomo %d waiting for 0 before fire execve \n", getpid());
     sem_wait_for_zero(semid);

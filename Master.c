@@ -11,8 +11,6 @@
 #include <sys/msg.h>
 #include <signal.h>
 #include "lib/MacroUtil.h"
-#include "lib/Util.h"
-#include "lib/macro.h"
 #include "lib/GeneralUtils.h"
 
 
@@ -101,7 +99,7 @@ int main() {
     }
 
     /* Creazione MEMORIA CONDIVISA per le statistiche ogni secondo, metto struttura DUMP! */
-    shmidReport = shmget(SHMKEYREPORT, sizeof(struct Dump), IPC_CREAT | 0666);
+    shmidReport = shmget(IPC_PRIVATE, sizeof(struct Dump), IPC_CREAT | 0666);
     if (shmidReport == -1) {
         fprintf(stderr, "%s: %d. Errore in shmget #%03d: %s\n", __FILE__, __LINE__, errno, strerror(errno));
         exit(EXIT_FAILURE);
@@ -130,7 +128,7 @@ int main() {
 
 
     /* Creazione message queue */
-    msgid = msgget(MSGKEY, IPC_CREAT | 0666);
+    msgid = msgget(IPC_PRIVATE, IPC_CREAT | 0666);
     if (msgid == -1) {
         fprintf(stderr, "%s: %d. Errore in msgget #%03d: %s\n", __FILE__, __LINE__, errno, strerror(errno));
         exit(EXIT_FAILURE);
@@ -308,13 +306,14 @@ int main() {
         return 1;
     }
     sleep(3);
-    for (int k = 0; k < shared_dump->contatore_atomi; k++) {
+    /**************/
+    /*for (int k = 0; k < shared_dump->contatore_atomi; k++) {
         if (kill(atomi_pids[k], SIGTERM) == 0) {
         } else {
             perror("Errore durante l'invio del segnale");
             return 1;
         }
-    }
+    }*/
 
 
     sleep(5); /*Questa sleep serve sennò il master finisce prima degli altri processi*/

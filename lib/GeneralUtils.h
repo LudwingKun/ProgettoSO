@@ -84,4 +84,25 @@ int trova_pos(int array[], int *dimensione, pid_t pid);
 
 
 void gestore_segnale();
+
+
+/*Dump per riportare le statistiche ogni secondo*/
+typedef struct Dump{
+    int attivazione;
+    int scissione;
+    int energia_prodotta;
+    int energia_consumata;
+    int scoria_prodotta;
+    int contatore_atomi;
+}dump;
+
+/*vediamo se serve anche quello totale*/
+
+typedef struct message {
+    long msg_type;
+    char msg_text[100];
+} message;
+
+void seedRandom(void);
+
 #endif
