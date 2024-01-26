@@ -1,3 +1,9 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <time.h>
+#include <sys/shm.h>
+#include <signal.h>
 #include "lib/GeneralUtils.h"
 
 /**TODO ancora: da mettere in memoria condivisa i pid degli atomi che crea, per ora aggiungo solo al contatore */
@@ -36,6 +42,7 @@ int main(int argc, char *argv[]) {
     }
 
     STEP_ALIMENTAZIONE = shmidInit_ptr[5];
+    printf ("STEP_ALIMENTAZIONE: %d\n", STEP_ALIMENTAZIONE);
     N_NUOVI_ATOMI = shmidInit_ptr[6];
     N_ATOM_MAX = shmidInit_ptr[7];
     semid = shmidInit_ptr[10];
@@ -58,8 +65,8 @@ int main(int argc, char *argv[]) {
 
     char *args1[] = {"atomo",buffer, buffer1, NULL};
 
-    /*printf ("Sono dentro Alimentazione\n");
-    printf ("pid alimentazione! %d\n", getpid ());*/
+    printf ("Sono dentro Alimentazione\n");
+    printf ("pid alimentazione! %d\n", getpid ());
 
     printf ("Alimentazione waiting for zero\n");
     sem_wait_for_zero (semid);
@@ -77,18 +84,18 @@ int main(int argc, char *argv[]) {
                     perror ("fork");
                     exit (EXIT_FAILURE);
                 case 0:
-                    /*printf ("Atomo_Alimentatore_pid: %d\n", getpid());*/
+                    printf ("Atomo_Alimentatore_pid: %d\n", getpid());
                     P(6, semid);
                     dump_ptr->contatore_atomi++;
                     V(6, semid);
                     close (file_pipe[1]); /*chiudi scrittura*/
                     sleep (1);
                     read (file_pipe[0], &num, sizeof (int));
-                    /*printf ("numero letto: %d per atomo con pid: %d\n", num, getpid());*/
+                    printf ("numero letto: %d per atomo con pid: %d\n", num, getpid());
                     close (file_pipe[0]);
                     /*TEST_ERROR*/
                     sprintf(args1[2], "%d", num);
-                    /*printf("!!!!LETTURA Atomo_pid da ALIMENTAZIONE: %d\n", getpid());*/
+                    printf("!!!!LETTURA Atomo_pid da ALIMENTAZIONE: %d\n", getpid());
                     if (execve("bin/atomo", args1, NULL) == -1) {
                         perror("execve");
                         exit(EXIT_FAILURE);
@@ -98,7 +105,7 @@ int main(int argc, char *argv[]) {
                     /* PIPE -> atomo si mette in ascolto e attende il numero atomico che gli invia il padre */
                     close (file_pipe[0]);
                     numero_atomico = random_btw(1, N_ATOM_MAX);
-                    /*printf ("PADRE ALIMENTAZIONE PRODUCE PER ALIMENTATORE: %d \n", numero_atomico);*/
+                    printf ("PADRE ALIMENTAZIONE PRODUCE PER ALIMENTATORE: %d \n", numero_atomico);
                     write (file_pipe[1], &numero_atomico, sizeof (int));
                     break;
             }

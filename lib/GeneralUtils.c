@@ -80,7 +80,6 @@ void rimuovi_elemento(int array[], int *dimensione, int posizione) {
 
 }
 
-
 int trova_pos(int array[], int *dimensione, pid_t pid) {
     int res;
     int i = 0;
