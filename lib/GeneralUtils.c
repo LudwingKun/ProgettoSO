@@ -95,3 +95,6 @@ int trova_pos(int array[], int *dimensione, pid_t pid) {
     return res;
 }
 
+void aggiungi_elemento(int array[], int *dimensione, pid_t pid){
+
+}

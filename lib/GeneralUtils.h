@@ -89,7 +89,13 @@ void rimuovi_elemento(int array[], int *dimensione, int posizione);
  * @return posizione corrispondente
  */
 int trova_pos(int array[], int *dimensione, pid_t pid);
-
+/**
+ * aggiunge il pid al vettore, espandendo la dimensione se necessario
+ * @param array
+ * @param dimensione
+ * @param pid
+ */
+void aggiungi_elemento(int array[], int *dimensione, pid_t pid);
 
 void gestore_segnale();
 
@@ -111,6 +117,10 @@ typedef struct message {
     char msg_text[100];
 } message;
 
-void seedRandom(void);
+typedef struct atomi{
+    int indice;
+    int dimensione;
+    int pids[];
+}atomi;
 
 #endif

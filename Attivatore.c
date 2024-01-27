@@ -7,7 +7,7 @@ struct Dump *dump_ptr;
 
 int main(int argc, char *argv[]) {
     int msgid, shmid, shmidReport,i=0;
-    struct message myMessage;
+    message myMessage;
     int shmidInit, STEP_ATTIVATORE;
     int *shmidInit_ptr;
     int num_bytes;
@@ -16,7 +16,7 @@ int main(int argc, char *argv[]) {
     sa.sa_handler = gestore_segnale;
     sigaction(SIGTERM, &sa, NULL);
 
-
+    printf("HELLO DA ATTIVATORE.... \n");
     if (argc != 2) {
         fprintf(stderr, "Error, wrong number of argument for atomo\n");
         exit(EXIT_FAILURE);
@@ -54,26 +54,27 @@ int main(int argc, char *argv[]) {
 
     /*Collega la memoria condivisa Report al puntatore*/
     dump_ptr = (struct Dump *) shmat(shmidReport, NULL, 0);
-    if ((struct Dump *) dump_ptr == (struct Dump *) (-1)) {
+    if ((struct Dump *) dump_ptr == (void *) (-1)) {
         perror("shmat fail");
         exit(EXIT_FAILURE);
     }
 
     /* Collega la memoria condivisa pids al puntatore*/
-    pids_ptr = (int*)shmat(shmid,NULL,0);
+    pids_ptr = (int *)shmat(shmid,NULL,0);
+    TEST_ERROR
     if (pids_ptr == (void *)-1) {
         perror("shmat attivatore puntatore pids");
         return 1;
     }
 
-    /*printf("Attivatore waiting for zero...");*/
+    printf("Attivatore waiting for zero... \n");
     sem_wait_for_zero(semid);
 
 
-    sleep(STEP_ATTIVATORE);
+    /*sleep(STEP_ATTIVATORE);*/
     while(1) {
         i=0;
-        while (pids_ptr[i] !=NULL) {
+        while (pids_ptr[i] != NULL) {
             myMessage.msg_type = pids_ptr[i];
             num_bytes = sprintf(myMessage.msg_text, "scissione");
             msgsnd(msgid, &myMessage, num_bytes, 0);
