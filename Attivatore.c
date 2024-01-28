@@ -83,10 +83,10 @@ int main(int argc, char *argv[]) {
         for(int k = 0; k < 3; k++ ){
             casuali[k] = random_btw(0, pids_ptr->indice);
         }
-        printf("Attivatore stampa indiceeeee %d\n", pids_ptr->indice );
+        /*printf("Attivatore stampa indiceeeee %d\n", pids_ptr->indice );
         for(int f = 0; f <pids_ptr->indice; f++){
             printf("PID LETTI :%d con i %d \n", pids_ptr->pids[f], f);
-        }
+        }*/
         while (i < 3) {
             myMessage.msg_type = pids_ptr->pids[casuali[i]];
             num_bytes = sprintf(myMessage.msg_text, "scissione");

@@ -263,31 +263,56 @@ int main() {
     printf("Master  %d waiting for 0...\n", getpid());
     sem_wait_for_zero(semid);
 
-    printf("||| ------------------------------ INIZIO SIMULAZIONE -------------------------------------- |||\n");
+    printf("||| ---------------------------------------- INIZIO SIMULAZIONE ------------------------------------------------ |||\n");
 
+    int attivazioni=0,scissioni=0,en_prod=0,en_cons=0,scorie=0,atomi=0;
     for (current_second = 0; current_second <= SIM_DURATION; current_second++) {
 
         /*************************** STATISTICHE (al sec) **********************************************************/
-
+        P(1,semid);
+        P(2,semid);
+        P(3,semid);
+        P(4,semid);
+        P(5,semid);
         printf("\n\n\n");
-        printf("|------------------------------------------------------------------------------------------|\n");
+        printf("|--------------------------------------------------------------------------------------------------------------|\n");
         printf("                                      SECONDO %d\n", current_second);
-        printf("|------------------------------------------------------------------------------------------|\n");
-        printf("|-------------|-----------|------------------|---------------------|--------|--------------|\n");
-        printf("| ATTIVAZIONI | SCISSIONI | ENERGIA PRODOTTA |  ENERGIA CONSUMATA  | SCORIE | ATOMI TOTALI |\n");
-        printf("|-------------|-----------|------------------|---------------------|--------|--------------|\n");
-        printf("|     %3d     |    %3d    |        %3d       |          %3d        |  %3d   |      %3d     |\n",
+        printf("|--------------------------------------------------------------------------------------------------------------|\n");
+        printf("|-----------------|---------------|----------------------|-------------------------|------------|--------------|\n");
+        printf("|   ATTIVAZIONI   |   SCISSIONI   |   ENERGIA PRODOTTA   |    ENERGIA CONSUMATA    |   SCORIE   |              |\n");
+        printf("|-----------------|---------------|----------------------|-------------------------|------------|--------------|\n");
+        printf("|     %3d         |    %3d        |        %3d           |              %3d        |  %3d       |              |\n",
+               dump_ptr->attivazione-attivazioni,
+               dump_ptr->scissione-scissioni,
+               dump_ptr->energia_prodotta-en_prod,
+               dump_ptr->energia_consumata-en_cons,
+               dump_ptr->scoria_prodotta-scorie);
+               /*pids_ptr->indice-atomi);*/
+        printf("\n");
+        printf("|-----------------|---------------|----------------------|-------------------------|------------|--------------|\n");
+        printf("| ATTIVAZIONI TOT | SCISSIONI TOT | ENERGIA PRODOTTA TOT |  ENERGIA CONSUMATA TOT  | SCORIE TOT | ATOMI TOTALI |\n");
+        printf("|-----------------|---------------|----------------------|-------------------------|------------|--------------|\n");
+        printf("|     %3d         |    %3d        |        %3d           |              %3d        |  %3d       |      %3d     |\n",
                dump_ptr->attivazione,
                dump_ptr->scissione,
                dump_ptr->energia_prodotta,
                dump_ptr->energia_consumata,
                dump_ptr->scoria_prodotta,
                pids_ptr->indice);
-        printf("|-------------|-----------|------------------|---------------------|--------|--------------|\n");
+        printf("|-----------------|---------------|----------------------|-------------------------|------------|--------------|\n");
         printf("\n\n\n");
-
+                attivazioni=dump_ptr->attivazione;
+                scissioni=dump_ptr->scissione;
+                en_prod=dump_ptr->energia_prodotta;
+                en_cons=dump_ptr->energia_consumata;
+                scorie=dump_ptr->scoria_prodotta;
+                atomi=pids_ptr->indice;
         /*************************** STATISTICHE (totali) **********************************************************/
-        /* In realtà vedi se dividere e se non c'è bisogno */
+        V(1,semid);
+        V(2,semid);
+        V(3,semid);
+        V(4,semid);
+        V(5,semid);
         sleep(1);
     }
 
@@ -356,7 +381,7 @@ int main() {
     shmctl(shmidInit, IPC_RMID, NULL);
     msgctl(msgid, IPC_RMID, NULL);
 
-    printf("||| ------------------------------ FINE SIMULAZIONE -------------------------------------- |||\n");
+    printf("\n||| ---------------------------------------- FINE SIMULAZIONE ------------------------------------------------ |||\n");
 
     return 0;
 

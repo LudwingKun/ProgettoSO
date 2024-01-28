@@ -97,6 +97,8 @@ int main(int argc, char *argv[]) {
                 rimuovi_elemento(pids_ptr->pids, &pids_ptr->indice, pos);
                 printf("DIM VETTORE: %d \n", pids_ptr->indice);
                 V(7, semid);
+
+                gestore_segnale();
                 exit(EXIT_SUCCESS);
             }
             if (pipe(fd) == -1) {
@@ -154,7 +156,7 @@ void gestore_segnale() {
         perror("shmdt");
         exit(EXIT_FAILURE);
     }
-    printf("Detach in attivatore avvenuto");
+    printf("Detach in atomo avvenuto\n");
     exit(EXIT_SUCCESS);
 }
 
