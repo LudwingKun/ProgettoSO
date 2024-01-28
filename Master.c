@@ -9,11 +9,10 @@ int main() {
     int N_ATOMI_INIT, ENERGY_DEMAND, MIN_N_ATOMICO, N_NUOVI_ATOMI, N_ATTIVATORE, N_ALIMENTAZIONE, N_ATOM_MAX, STEP_ALIMENTAZIONE, ENERGY_EXPLODE_THRESHOLD, SIM_DURATION, STEP_ATTIVATORE;
     int pid_attivatore, pid_alimentazione;
     int current_second;
-    int shmidInit, semid, shmid, msgid, shmidReport;
+    int shmidInit, semid, shmid_pids, msgid, shmid_dump;
     int *shmidInit_ptr;
-    int *pids_ptr;
+    atomi *pids_ptr;
     dump *dump_ptr;
-    atomi atomi_pid;
 
     int numero_atomico; /*num spedito dal padre*/
     int num; /*num letto dall'atomo*/
@@ -49,8 +48,6 @@ int main() {
 
     /*************************************** CREAZIONE STRUTTURE *****************************************************/
 
-    pids_ptr = malloc(N_ATOMI_INIT + N_NUOVI_ATOMI * sizeof(int));
-
 
     /*Creazione memoria condivisa per passaggio parametri + ids*/
     shmidInit = shmget(IPC_PRIVATE, sizeof(int) * (15) + 1, IPC_CREAT | 0666);
@@ -66,44 +63,45 @@ int main() {
         perror("shmat");
         return 1;
     }
-
+/*TODO: CAMBIARE QUA**/
     /* Creazione MEMORIA CONDIVISA per array pid */
-    shmid = shmget(IPC_PRIVATE, sizeof(atomi), IPC_CREAT | 0666);
-    if (shmid == -1) {
-        fprintf(stderr, "%s: %d. Errore in shmget for shmid #%03d: %s\n", __FILE__, __LINE__, errno, strerror(errno));
+    shmid_pids = shmget(IPC_PRIVATE, sizeof(atomi), IPC_CREAT | 0666);
+    if (shmid_pids == -1) {
+        fprintf(stderr, "%s: %d. Errore in shmget for shmid_pids #%03d: %s\n", __FILE__, __LINE__, errno, strerror(errno));
         exit(EXIT_FAILURE);
     }
-    printf("....shmid sono in MASTER: %d\n", shmid);
+    printf("....shmid_pids sono in MASTER: %d\n", shmid_pids);
 
     /* Collega la memoria condivisa al puntatore*/
-    pids_ptr = (int *) shmat(shmid, NULL, 0);
-    if (pids_ptr == (void *) -1) {
-        perror("shmat");
+    pids_ptr = (atomi * ) shmat(shmid_pids, NULL, 0);
+    if (pids_ptr == (struct Atomi *) -1) {
+        perror("shmat fail");
+        TEST_ERROR
         return 1;
     }
 
     /* Creazione MEMORIA CONDIVISA per le statistiche ogni secondo, metto struttura DUMP! */
-    shmidReport = shmget(IPC_PRIVATE, sizeof(struct Dump), IPC_CREAT | 0666);
-    if (shmidReport == -1) {
+    shmid_dump = shmget(IPC_PRIVATE, sizeof(struct Dump), IPC_CREAT | 0666);
+    if (shmid_dump == -1) {
         fprintf(stderr, "%s: %d. Errore in shmget #%03d: %s\n", __FILE__, __LINE__, errno, strerror(errno));
         exit(EXIT_FAILURE);
     }
-
-    dump_ptr = (struct Dump *) shmat(shmidReport, NULL, 0);
+/*dump_ptr è un puntatore alla memoria condivisa del dump*/
+    dump_ptr = (struct Dump *) shmat(shmid_dump, NULL, 0);
     if ((struct Dump *) dump_ptr == (struct Dump *) (-1)) {
         perror("shmat fail");
         exit(EXIT_FAILURE);
     }
 
-    /* creazione 7 semafori
+    /* creazione 8 semafori
      * 0)sincronizzazione processi iniziali
      * 1)attivazione
      * 2)scissione
      * 3)energia prodotta
      * 4)energia consumata
      * 5)scorie prodotta
-     * 6)contatore atomi
-     * 7)controlla la struct atomi*/
+     * 6)contatore Atomi
+     * 7)controlla la struct Atomi*/
 
     semid = semget(IPC_PRIVATE, 8, IPC_CREAT | 0666);
     if (semid == -1) {
@@ -121,7 +119,7 @@ int main() {
 
     /*************************************** FINE CREAZIONE STRUTTURE *****************************************************/
 
-
+    /*************************************** INIZIALIZZAZIONI *************************************************************/
     /* Fill memoria condivisa */
     shmidInit_ptr[0] = ENERGY_DEMAND;
     shmidInit_ptr[1] = MIN_N_ATOMICO;
@@ -131,54 +129,64 @@ int main() {
     shmidInit_ptr[5] = STEP_ALIMENTAZIONE;
     shmidInit_ptr[6] = N_NUOVI_ATOMI;
     shmidInit_ptr[7] = N_ATOM_MAX;
-    shmidInit_ptr[8] = shmid;
-    shmidInit_ptr[9] = shmidReport;
+    shmidInit_ptr[8] = shmid_pids;
+    shmidInit_ptr[9] = shmid_dump;
     shmidInit_ptr[10] = semid;
     shmidInit_ptr[11] = msgid;
-/*
-   sprintf(buffer, "%d", shmidInit);*/
+
 
     if (sprintf((char *) args1[1], "%d", shmidInit) < 0) {
         printf("ERRORE");
     }
 
-
+    /**seed initialize**/
     srand(time(NULL));
+
 
     /*Inizializzo semaforo per dump*/
     sem_init(semid, N_ATOMI_INIT + 1 + 1 + 1, 0);
 
+    /*inizializzo il semaforo*/
     for (int j = 1; j < 8; j++) {
         sem_init(semid, 1, j);
     }
 
-
-    /*inizializzo il semaforo*/
-
+    /**init array pids**/
     P(6, semid);
     dump_ptr->contatore_atomi = 0;
     V(6, semid);
+
+    P(7, semid);
+    pids_ptr->indice = 0;
+    pids_ptr->dimensione = 100;
+    V(7, semid);
+    /*************************************** FINE INIZIALIZZAZIONI *************************************************************/
+
     for (i = 0; i < N_ATOMI_INIT; i++) {
         if (pipe(file_pipe) == -1) {
             perror("fail in pipe");
             exit(EXIT_FAILURE);
         }
-
-
         switch (fork()) {
             case -1:
                 perror("fork fail for atom");
                 exit(EXIT_FAILURE);
             case 0:
                 sem_down(semid); /*decremento del semaforo*/
-                /*printf("Atomo creato!\npid: %d \npadre: %d \n", getpid(), getppid());*/
+
                 P(6, semid);
                 dump_ptr->contatore_atomi++;
                 V(6, semid);
 
+                P(7, semid);
+                pids_ptr->indice++;
+                pids_ptr->pids[i] = getpid();
+                printf("FIGLIO %d \n", getpid());
+                V(7, semid);
+
                 /*ricezione numero atomico*/
                 close(file_pipe[1]); /*chiudi scrittura*/
-                sleep(1);
+                /*sleep(1);*/
                 read(file_pipe[0], &num, sizeof(int));
                 /*printf("numero letto: %d per atomo con pid: %d\n", num, getpid());*/
                 close(file_pipe[0]);
@@ -186,8 +194,6 @@ int main() {
                 sprintf((char *) args1[2], "%d", num); /*conversione a stringa*/
 
                 printf("!!!!LETTURA Atomo_pid %d da MASTER: %d\n", getpid(), getppid());
-                pids_ptr[i] = getpid();
-
 
                 if (execve("bin/atomo", args1, NULL) == -1) {
                     perror("execve");
@@ -246,30 +252,22 @@ int main() {
             break;
     }
     sleep(5);
-
     sem_down(semid);
+    P(7, semid);
+    for(int z = 0; z < 3; z++){
+        printf("YOYO: %d \n", pids_ptr->pids[z]);
+    }
+    V(7, semid);
+
+    printf("MASTER : %d\n ", pids_ptr->indice);
+    printf("Master  %d waiting for 0...\n", getpid());
     sem_wait_for_zero(semid);
 
     printf("||| ------------------------------ INIZIO SIMULAZIONE -------------------------------------- |||\n");
 
     for (current_second = 0; current_second <= SIM_DURATION; current_second++) {
-        /*kill processi atomo*/
-        /*for(i = 0; i < N_ATOMI_INIT; i++) {
-            printf("atomi_pids[%d] = %d\n", i, atomi_pids[i]);
-            kill(atomi_pids[i], SIGKILL);
-        }*/
-        /*************************** STATISTICHE (al sec) **********************************************************/
 
-        /*printf("\n\n\n");
-        printf("| SECONDO: %d | ATTIVAZIONI: %d | SCISSIONI: %d | ENERGIA PRODOTTA: %d |  ENERGIA CONSUMATA: %d | SCORIE: %d | ATOMI TOTALI: %d |\n",
-               current_second,
-               dump_ptr->attivazione,
-               dump_ptr->scissione,
-               dump_ptr->energia_prodotta,
-               dump_ptr->energia_consumata,
-               dump_ptr->scoria_prodotta,
-               dump_ptr->contatore_atomi);
-        printf("\n\n\n");*/
+        /*************************** STATISTICHE (al sec) **********************************************************/
 
         printf("\n\n\n");
         printf("|------------------------------------------------------------------------------------------|\n");
@@ -284,7 +282,7 @@ int main() {
                dump_ptr->energia_prodotta,
                dump_ptr->energia_consumata,
                dump_ptr->scoria_prodotta,
-               dump_ptr->contatore_atomi);
+               pids_ptr->indice);
         printf("|-------------|-----------|------------------|---------------------|--------|--------------|\n");
         printf("\n\n\n");
 
@@ -294,7 +292,6 @@ int main() {
     }
 
     //sigemtyset
-
     if (kill(pid_attivatore, SIGTERM) == 0) {
         printf("Segnale di terminazione inviato al processo con PID %d\n", pid_attivatore);
     } else {
@@ -308,18 +305,19 @@ int main() {
         perror("Errore durante l'invio del segnale");
         return 1;
     }
-    sleep(3);
     /**************/
-    /*for (int k = 0; k < shared_dump->contatore_atomi; k++) {
-        if (kill(atomi_pids[k], SIGTERM) == 0) {
+    P(7, semid);
+    for (int k = 0; k < pids_ptr->indice; k++) {
+        if (kill(pids_ptr->pids[k], SIGTERM) == 0) {
         } else {
             perror("Errore durante l'invio del segnale");
             return 1;
         }
-    }*/
+    }
+    V(7,semid);
+    sleep(5);
 
-
-    sleep(5); /*Questa sleep serve sennò il master finisce prima degli altri processi*/
+    /*Questa sleep serve sennò il master finisce prima degli altri processi*/
 
 
 
@@ -344,7 +342,7 @@ int main() {
     }
 
     /* rimozione memoria condivisa per dump */
-    if (shmctl(shmidReport, IPC_RMID, NULL) == -1) {
+    if (shmctl(shmid_dump, IPC_RMID, NULL) == -1) {
         perror("shmctl");
         exit(EXIT_FAILURE);
     }
@@ -354,7 +352,7 @@ int main() {
         semctl(semid, n, IPC_RMID);
     }
 
-    shmctl(shmid, IPC_RMID, NULL);
+    shmctl(shmid_pids, IPC_RMID, NULL);
     shmctl(shmidInit, IPC_RMID, NULL);
     msgctl(msgid, IPC_RMID, NULL);
 

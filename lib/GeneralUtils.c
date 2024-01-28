@@ -39,7 +39,6 @@ void P(int n, int sem_id) {
     op.sem_op = -1;
     op.sem_flg = 0;
     semop(sem_id, &op, 1);
-    TEST_ERROR
 }
 
 void V(int n, int sem_id) {
@@ -48,7 +47,6 @@ void V(int n, int sem_id) {
     op.sem_op = 1;
     op.sem_flg = 0;
     semop(sem_id, &op, 1);
-    TEST_ERROR
 }
 
 void lettura_pipe(int fd[2], int *num) {
@@ -95,13 +93,12 @@ int trova_pos(int array[], int *dimensione, pid_t pid) {
     return res;
 }
 
-
-void aggiungi_elemento(int *array, int *dimensione, int *posizione, pid_t pid) {
+int aggiungi_elemento(int *array, int *dimensione, int *posizione, pid_t pid) {
     if (*posizione + 1 == *dimensione) {
-        *dimensione = *dimensione * 2;
-        array = (int *)realloc(array, *dimensione * sizeof(int));
-        printf("Dimensione dell'array raddoppiata: %d\n", *dimensione);
+        printf("Errore dimensione array: \n");
+        return -1;
     }
-    *posizione = *posizione + 1;
     (array)[*posizione] = pid;
+    *posizione = *posizione + 1;
+    return 0;
 }

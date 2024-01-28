@@ -1,6 +1,6 @@
 #include "lib/GeneralUtils.h"
 
-/**TODO ancora: da mettere in memoria condivisa i pid degli atomi che crea, per ora aggiungo solo al contatore */
+/**TODO ancora: da mettere in memoria condivisa i pid degli Atomi che crea, per ora aggiungo solo al contatore */
 
 struct Dump *dump_ptr;
 
@@ -81,6 +81,7 @@ int main(int argc, char *argv[]) {
                     P(6, semid);
                     dump_ptr->contatore_atomi++;
                     V(6, semid);
+
                     close (file_pipe[1]); /*chiudi scrittura*/
                     sleep (1);
                     read (file_pipe[0], &num, sizeof (int));

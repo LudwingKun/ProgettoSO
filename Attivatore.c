@@ -1,7 +1,7 @@
 #include "lib/GeneralUtils.h"
 
 
-int *pids_ptr;
+struct Atomi *pids_ptr;
 struct Dump *dump_ptr;
 
 
@@ -36,12 +36,13 @@ int main(int argc, char *argv[]) {
     shmid = shmidInit_ptr[8];
     msgid = shmidInit_ptr[11];
 
-/*  TEST STAMPA IDS
+/*
     printf("STEP_ATTIVATORE: %d\n", STEP_ATTIVATORE);
     printf("semid: %d\n", semid);
     printf("shmidReport: %d\n", shmidReport);
     printf("shmid: %d\n", shmid);
-    printf("msgid: %d\n", msgid);*/
+    printf("msgid: %d\n", msgid);
+*/
 
 
     /* detach memoria condivisa per init */
@@ -60,22 +61,34 @@ int main(int argc, char *argv[]) {
     }
 
     /* Collega la memoria condivisa pids al puntatore*/
-    pids_ptr = (int *)shmat(shmid,NULL,0);
-    TEST_ERROR
+    pids_ptr = (struct Atomi *)shmat(shmid, NULL, 0);
     if (pids_ptr == (void *)-1) {
         perror("shmat attivatore puntatore pids");
         return 1;
     }
 
     printf("Attivatore waiting for zero... \n");
-    sem_wait_for_zero(semid);
+    for(int s = 0; s < 3; s++){
+        printf("ATTIVATORE LEGGE : %d \n", pids_ptr->pids[s]);
+    }
+    printf("ATTIVATORE LEGGE INDICE : %d\n ", pids_ptr->indice);
 
+    sem_wait_for_zero(semid);
 
     /*sleep(STEP_ATTIVATORE);*/
     while(1) {
         i=0;
-        while (pids_ptr[i] != NULL) {
-            myMessage.msg_type = pids_ptr[i];
+        int casuali[3];
+        P(7, semid );
+        for(int k = 0; k < 3; k++ ){
+            casuali[k] = random_btw(0, pids_ptr->indice);
+        }
+        printf("Attivatore stampa indiceeeee %d\n", pids_ptr->indice );
+        for(int f = 0; f <pids_ptr->indice; f++){
+            printf("PID LETTI :%d con i %d \n", pids_ptr->pids[f], f);
+        }
+        while (i < 3) {
+            myMessage.msg_type = pids_ptr->pids[casuali[i]];
             num_bytes = sprintf(myMessage.msg_text, "scissione");
             msgsnd(msgid, &myMessage, num_bytes, 0);
             P(1, semid);
@@ -83,8 +96,9 @@ int main(int argc, char *argv[]) {
             V(1, semid);
             i++;
         }
+        V(7, semid);
+        printf("DORME ATTIVATORE \n");
         sleep(STEP_ATTIVATORE);
-
     }
 
 

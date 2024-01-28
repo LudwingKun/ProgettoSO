@@ -1,8 +1,8 @@
 #include "lib/MacroUtil.h"
 #include "lib/GeneralUtils.h"
 
-struct Dump* dump_ptr;
-int *pids_ptr;
+struct Dump *dump_ptr;
+atomi *pids_ptr;
 
 
 int main(int argc, char *argv[]) {
@@ -17,8 +17,14 @@ int main(int argc, char *argv[]) {
     int pids_id;
     int dump_id;
     int pos;
-    int numeri_atomici;
+    struct sigaction sa;
+    sa.sa_handler = gestore_segnale;
+    sigaction(SIGTERM, &sa, NULL);
 
+
+    char buffer[10];
+    char buffer1[10];
+    char *args1[] = {"atomo",buffer, buffer1, NULL};
     if (argc != 3) {
         fprintf(stderr, "Error, wrong number of argument for atomo\n");
         exit(EXIT_FAILURE);
@@ -34,14 +40,14 @@ int main(int argc, char *argv[]) {
         perror("shmat fail");
         exit(EXIT_FAILURE);
     }
-
+    sprintf(buffer, "%d", shmidInit);
     MIN_N_ATOMICO = shmidInit_ptr[1];
     msgid = shmidInit_ptr[11];
     semid = shmidInit_ptr[10];
     pids_id = shmidInit_ptr[8];
     dump_id = shmidInit_ptr[9];
 
-    pids_ptr = (int *) shmat(pids_id, NULL, 0);
+    pids_ptr = (atomi *) shmat(pids_id, NULL, 0);
     if ((int *) pids_ptr == (void *) (-1)) {
         perror("shmat fail");
         exit(EXIT_FAILURE);
@@ -77,17 +83,20 @@ int main(int argc, char *argv[]) {
             /*printf("messaggio ricevuto per pid %d: %s\n\n", getpid(), myMessage.msg_text);*/
             if (numero_atomico <= MIN_N_ATOMICO) {
                 printf("CHILD %d va in scorie e termina \n", getpid());
+
                 P(5, semid);
                 dump_ptr->scoria_prodotta++;
                 V(5, semid);
 
-                P(6, semid);
-                pos = trova_pos(pids_ptr, &dump_ptr->contatore_atomi, getpid());
-                printf("DIM VETTORE prima : %d \n", dump_ptr->contatore_atomi);
+
+
+                P(7, semid);
+                pos = trova_pos(pids_ptr->pids, &pids_ptr->indice, getpid());
+                printf("DIM VETTORE prima : %d \n", pids_ptr->indice);
                 printf("POS TROVATA .%d \n", pos);
-                rimuovi_elemento(pids_ptr, &dump_ptr->contatore_atomi, pos);
-                printf("DIM VETTORE: %d \n", dump_ptr->contatore_atomi);
-                V(6, semid);
+                rimuovi_elemento(pids_ptr->pids, &pids_ptr->indice, pos);
+                printf("DIM VETTORE: %d \n", pids_ptr->indice);
+                V(7, semid);
                 exit(EXIT_SUCCESS);
             }
             if (pipe(fd) == -1) {
@@ -103,11 +112,25 @@ int main(int argc, char *argv[]) {
                     printf("CHILD %d divisione da atomo : %d  \n ", getpid(), getppid());
                     lettura_pipe(fd, &num_figlio_r);
                     /**aggiornare DUMP**/
+                    P(7,semid);
+                    aggiungi_elemento(pids_ptr->pids, &pids_ptr->dimensione, &pids_ptr->indice , getpid());
+                    V(7,semid);
+
+                    P(2, semid);
+                    dump_ptr->scissione++;
+                    V(2, semid);
                     printf("CHILD %d con numero atomico : %d \n", getpid(), num_figlio_r);
+                    sprintf(args1[2], "%d", num_figlio_r);
+                    if (execve("bin/atomo", args1, NULL) == -1) {
+                        perror("execve");
+                        exit(EXIT_FAILURE);
+                    }
+                    exit (EXIT_FAILURE);
                     break;
                 default:
                     num_figlo_i = numero_atomico - numero_atomico / 2;
                     numero_atomico = numero_atomico - num_figlo_i;
+                    printf("ATOMO %d ha nuovo num atomico %d \n", getpid(), numero_atomico);
                     scrittura_pipe(fd, &num_figlo_i);
                     break;
             }

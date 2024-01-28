@@ -95,7 +95,7 @@ int trova_pos(int array[], int *dimensione, pid_t pid);
  * @param dimensione
  * @param pid
  */
-void aggiungi_elemento(int *array, int *dimensione, int *posizione, pid_t pid);
+int aggiungi_elemento(int *array, int *dimensione, int *posizione, pid_t pid);
 
 void gestore_segnale();
 
@@ -117,10 +117,10 @@ typedef struct message {
     char msg_text[100];
 } message;
 
-typedef struct atomi{
+typedef struct Atomi{
     int indice;
     int dimensione;
-    int pids[];
+    int pids[100];
 }atomi;
 
 #endif
