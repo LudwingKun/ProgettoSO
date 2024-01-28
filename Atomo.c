@@ -17,7 +17,7 @@ int main(int argc, char *argv[]) {
     int pids_id;
     int dump_id;
     int pos;
-
+    int numeri_atomici;
 
     if (argc != 3) {
         fprintf(stderr, "Error, wrong number of argument for atomo\n");
@@ -75,7 +75,7 @@ int main(int argc, char *argv[]) {
         }
         if (num_bytes > 0) {
             /*printf("messaggio ricevuto per pid %d: %s\n\n", getpid(), myMessage.msg_text);*/
-            if (numero_atomico < MIN_N_ATOMICO) {
+            if (numero_atomico <= MIN_N_ATOMICO) {
                 printf("CHILD %d va in scorie e termina \n", getpid());
                 P(5, semid);
                 dump_ptr->scoria_prodotta++;

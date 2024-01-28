@@ -68,8 +68,8 @@ int random_btw(int min, int max) {
     return rand() % (max - min + 1) + min;
 }
 
-void rimuovi_elemento(int array[], int *dimensione, int posizione) {
-    if (posizione < 0 || posizione >= *dimensione) {
+void rimuovi_elemento(int *array, int *dimensione, int posizione) {
+    if (posizione < 0 || posizione > *dimensione) {
         printf("Posizione non valida\n");
         return;
     }
@@ -95,6 +95,13 @@ int trova_pos(int array[], int *dimensione, pid_t pid) {
     return res;
 }
 
-void aggiungi_elemento(int array[], int *dimensione, pid_t pid){
 
+void aggiungi_elemento(int *array, int *dimensione, int *posizione, pid_t pid) {
+    if (*posizione + 1 == *dimensione) {
+        *dimensione = *dimensione * 2;
+        array = (int *)realloc(array, *dimensione * sizeof(int));
+        printf("Dimensione dell'array raddoppiata: %d\n", *dimensione);
+    }
+    *posizione = *posizione + 1;
+    (array)[*posizione] = pid;
 }

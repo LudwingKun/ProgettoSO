@@ -80,7 +80,7 @@ int random_btw(int min, int max);
  * @param dimensione
  * @param posizione
  */
-void rimuovi_elemento(int array[], int *dimensione, int posizione);
+void rimuovi_elemento(int *array, int *dimensione, int posizione);
 /**
  * la funzione trova la posizione del pid corrispondente
  * @param array
@@ -90,12 +90,12 @@ void rimuovi_elemento(int array[], int *dimensione, int posizione);
  */
 int trova_pos(int array[], int *dimensione, pid_t pid);
 /**
- * aggiunge il pid al vettore, espandendo la dimensione se necessario
+ * aggiunge il pid al vettore, raddoppiando la dimensione se necessario
  * @param array
  * @param dimensione
  * @param pid
  */
-void aggiungi_elemento(int array[], int *dimensione, pid_t pid);
+void aggiungi_elemento(int *array, int *dimensione, int *posizione, pid_t pid);
 
 void gestore_segnale();
 
