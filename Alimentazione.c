@@ -1,9 +1,8 @@
 #include "lib/GeneralUtils.h"
 
-/**TODO ancora: da mettere in memoria condivisa i pid degli Atomi che crea, per ora aggiungo solo al contatore */
 
 struct Dump *dump_ptr;
-
+atomi *pids_ptr;
 int main(int argc, char *argv[]) {
     int i;
     int atomi_alimentatore[10];
@@ -13,7 +12,7 @@ int main(int argc, char *argv[]) {
     int numero_atomico; /*num spedito dal padre*/
     int num; /*num letto dall'atomo*/
     int file_pipe[2];
-    int shmidInit, semid, dump_id;
+    int shmidInit, semid, dump_id, pids_id;
     int *shmidInit_ptr;
     struct sigaction sa;
     sa.sa_handler = gestore_segnale;
@@ -40,13 +39,18 @@ int main(int argc, char *argv[]) {
     N_ATOM_MAX = shmidInit_ptr[7];
     semid = shmidInit_ptr[10];
     dump_id = shmidInit_ptr[9];
-
-
+    pids_id = shmidInit_ptr[8];
 
     /* detach memoria condivisa per init */
     if (shmdt (shmidInit_ptr) == -1) {
         perror ("shmdt");
         exit (EXIT_FAILURE);
+    }
+/**Collegamento allla memoria condivisa per i pids**/
+    pids_ptr = (struct Atomi *)shmat(pids_id, NULL, 0);
+    if (pids_ptr == (void *)-1) {
+        perror("shmat Alimentazione puntatore pids");
+        return 1;
     }
 
     /*Collega la memoria condivisa dump al puntatore*/
@@ -78,9 +82,12 @@ int main(int argc, char *argv[]) {
                     exit (EXIT_FAILURE);
                 case 0:
                     /*printf ("Atomo_Alimentatore_pid: %d\n", getpid());*/
-                    P(6, semid);
+               /*     P(6, semid);
                     dump_ptr->contatore_atomi++;
-                    V(6, semid);
+                    V(6, semid);*/
+                    P(7, semid);
+                    aggiungi_elemento(pids_ptr->pids, &pids_ptr->dimensione, &pids_ptr->indice, getpid());
+                    V(7, semid);
 
                     close (file_pipe[1]); /*chiudi scrittura*/
                     sleep (1);
@@ -89,7 +96,7 @@ int main(int argc, char *argv[]) {
                     close (file_pipe[0]);
                     /*TEST_ERROR*/
                     sprintf(args1[2], "%d", num);
-                    /*printf("!!!!LETTURA Atomo_pid da ALIMENTAZIONE: %d\n", getpid());*/
+                    printf("!!!!LETTURA Atomo_pid da ALIMENTAZIONE: %d\n", getpid());
                     if (execve("bin/atomo", args1, NULL) == -1) {
                         perror("execve");
                         exit(EXIT_FAILURE);

@@ -99,7 +99,7 @@ int main(int argc, char *argv[]) {
                 V(7, semid);
 
                 gestore_segnale();
-                exit(EXIT_SUCCESS);
+               /* exit(EXIT_SUCCESS);*/
             }
             if (pipe(fd) == -1) {
                 perror("fail in pipe");

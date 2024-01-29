@@ -67,13 +67,14 @@ int main() {
     /* Creazione MEMORIA CONDIVISA per array pid */
     shmid_pids = shmget(IPC_PRIVATE, sizeof(atomi), IPC_CREAT | 0666);
     if (shmid_pids == -1) {
-        fprintf(stderr, "%s: %d. Errore in shmget for shmid_pids #%03d: %s\n", __FILE__, __LINE__, errno, strerror(errno));
+        fprintf(stderr, "%s: %d. Errore in shmget for shmid_pids #%03d: %s\n", __FILE__, __LINE__, errno,
+                strerror(errno));
         exit(EXIT_FAILURE);
     }
     printf("....shmid_pids sono in MASTER: %d\n", shmid_pids);
 
     /* Collega la memoria condivisa al puntatore*/
-    pids_ptr = (atomi * ) shmat(shmid_pids, NULL, 0);
+    pids_ptr = (atomi *) shmat(shmid_pids, NULL, 0);
     if (pids_ptr == (struct Atomi *) -1) {
         perror("shmat fail");
         TEST_ERROR
@@ -254,26 +255,25 @@ int main() {
     sleep(5);
     sem_down(semid);
     P(7, semid);
-    for(int z = 0; z < 3; z++){
+    for (int z = 0; z < 3; z++) {
         printf("YOYO: %d \n", pids_ptr->pids[z]);
     }
     V(7, semid);
 
-    printf("MASTER : %d\n ", pids_ptr->indice);
     printf("Master  %d waiting for 0...\n", getpid());
     sem_wait_for_zero(semid);
 
     printf("||| ---------------------------------------- INIZIO SIMULAZIONE ------------------------------------------------ |||\n");
 
-    int attivazioni=0,scissioni=0,en_prod=0,en_cons=0,scorie=0,atomi=0;
+    int attivazioni = 0, scissioni = 0, en_prod = 0, en_cons = 0, scorie = 0, atomi = 0;
     for (current_second = 0; current_second <= SIM_DURATION; current_second++) {
 
         /*************************** STATISTICHE (al sec) **********************************************************/
-        P(1,semid);
-        P(2,semid);
-        P(3,semid);
-        P(4,semid);
-        P(5,semid);
+        P(1, semid);
+        P(2, semid);
+        P(3, semid);
+        P(4, semid);
+        P(5, semid);
         printf("\n\n\n");
         printf("|--------------------------------------------------------------------------------------------------------------|\n");
         printf("                                      SECONDO %d\n", current_second);
@@ -282,12 +282,12 @@ int main() {
         printf("|   ATTIVAZIONI   |   SCISSIONI   |   ENERGIA PRODOTTA   |    ENERGIA CONSUMATA    |   SCORIE   |              |\n");
         printf("|-----------------|---------------|----------------------|-------------------------|------------|--------------|\n");
         printf("|     %3d         |    %3d        |        %3d           |              %3d        |  %3d       |              |\n",
-               dump_ptr->attivazione-attivazioni,
-               dump_ptr->scissione-scissioni,
-               dump_ptr->energia_prodotta-en_prod,
-               dump_ptr->energia_consumata-en_cons,
-               dump_ptr->scoria_prodotta-scorie);
-               /*pids_ptr->indice-atomi);*/
+               dump_ptr->attivazione - attivazioni,
+               dump_ptr->scissione - scissioni,
+               dump_ptr->energia_prodotta - en_prod,
+               dump_ptr->energia_consumata - en_cons,
+               dump_ptr->scoria_prodotta - scorie);
+        /*pids_ptr->indice-atomi);*/
         printf("\n");
         printf("|-----------------|---------------|----------------------|-------------------------|------------|--------------|\n");
         printf("| ATTIVAZIONI TOT | SCISSIONI TOT | ENERGIA PRODOTTA TOT |  ENERGIA CONSUMATA TOT  | SCORIE TOT | ATOMI TOTALI |\n");
@@ -301,20 +301,21 @@ int main() {
                pids_ptr->indice);
         printf("|-----------------|---------------|----------------------|-------------------------|------------|--------------|\n");
         printf("\n\n\n");
-                attivazioni=dump_ptr->attivazione;
-                scissioni=dump_ptr->scissione;
-                en_prod=dump_ptr->energia_prodotta;
-                en_cons=dump_ptr->energia_consumata;
-                scorie=dump_ptr->scoria_prodotta;
-                atomi=pids_ptr->indice;
-        /*************************** STATISTICHE (totali) **********************************************************/
-        V(1,semid);
-        V(2,semid);
-        V(3,semid);
-        V(4,semid);
-        V(5,semid);
+        /**aggiornamento valori temporanei **/
+        attivazioni = dump_ptr->attivazione;
+        scissioni = dump_ptr->scissione;
+        en_prod = dump_ptr->energia_prodotta;
+        en_cons = dump_ptr->energia_consumata;
+        scorie = dump_ptr->scoria_prodotta;
+        atomi = pids_ptr->indice;
+        V(1, semid);
+        V(2, semid);
+        V(3, semid);
+        V(4, semid);
+        V(5, semid);
         sleep(1);
     }
+    /*************************** STATISTICHE (totali) **********************************************************/
 
     //sigemtyset
     if (kill(pid_attivatore, SIGTERM) == 0) {
@@ -339,7 +340,7 @@ int main() {
             return 1;
         }
     }
-    V(7,semid);
+    V(7, semid);
     sleep(5);
 
     /*Questa sleep serve sennò il master finisce prima degli altri processi*/

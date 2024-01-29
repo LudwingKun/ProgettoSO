@@ -20,7 +20,7 @@ master legge e stampa a video i dati della memoria condivisa
 TODO: master ogni secondo stampa con un segnale (anche zero all'inizio)
 
 --------------------------ATOMI------------------------
-2 Memoria Condivisa dove inseriamo le struct di tutti gli atomi creati
+2 Memoria Condivisa dove inseriamo le struct di tutti gli Atomi creati
 Struct atomo -> pid, numeroAtomico
 
 1 Coda di Messaggi -> Attivatore invia segnale di Scissione all'atomo

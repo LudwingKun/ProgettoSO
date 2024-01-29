@@ -68,10 +68,6 @@ int main(int argc, char *argv[]) {
     }
 
     printf("Attivatore waiting for zero... \n");
-    for(int s = 0; s < 3; s++){
-        printf("ATTIVATORE LEGGE : %d \n", pids_ptr->pids[s]);
-    }
-    printf("ATTIVATORE LEGGE INDICE : %d\n ", pids_ptr->indice);
 
     sem_wait_for_zero(semid);
 
@@ -97,7 +93,6 @@ int main(int argc, char *argv[]) {
             i++;
         }
         V(7, semid);
-        printf("DORME ATTIVATORE \n");
         sleep(STEP_ATTIVATORE);
     }
 
