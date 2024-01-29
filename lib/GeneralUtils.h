@@ -99,6 +99,8 @@ int aggiungi_elemento(int *array, int *dimensione, int *posizione, pid_t pid);
 
 void gestore_segnale();
 
+int energy(int n1, int n2);
+
 
 /*Dump per riportare le statistiche ogni secondo*/
 typedef struct Dump{

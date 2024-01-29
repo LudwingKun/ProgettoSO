@@ -102,3 +102,15 @@ int aggiungi_elemento(int *array, int *dimensione, int *posizione, pid_t pid) {
     *posizione = *posizione + 1;
     return 0;
 }
+
+int max(int n1, int n2){
+if(n1>n2)
+    return n1;
+else return n2;
+}
+
+int energy(int n1, int n2){
+    return n1*n2-max(n1,n2);
+}
+
+

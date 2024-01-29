@@ -82,9 +82,10 @@ int main(int argc, char *argv[]) {
                     exit (EXIT_FAILURE);
                 case 0:
                     /*printf ("Atomo_Alimentatore_pid: %d\n", getpid());*/
-               /*     P(6, semid);
+                    P(6, semid);
                     dump_ptr->contatore_atomi++;
-                    V(6, semid);*/
+                    V(6, semid);
+
                     P(7, semid);
                     aggiungi_elemento(pids_ptr->pids, &pids_ptr->dimensione, &pids_ptr->indice, getpid());
                     V(7, semid);

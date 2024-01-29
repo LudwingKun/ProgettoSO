@@ -153,14 +153,14 @@ int main() {
     }
 
     /**init array pids**/
-    P(6, semid);
+    /*P(6, semid);
     dump_ptr->contatore_atomi = 0;
-    V(6, semid);
+    V(6, semid);*/
 
-    P(7, semid);
+    /*P(7, semid);
     pids_ptr->indice = 0;
     pids_ptr->dimensione = 100;
-    V(7, semid);
+    V(7, semid);*/
     /*************************************** FINE INIZIALIZZAZIONI *************************************************************/
 
     for (i = 0; i < N_ATOMI_INIT; i++) {
@@ -263,7 +263,7 @@ int main() {
     printf("Master  %d waiting for 0...\n", getpid());
     sem_wait_for_zero(semid);
 
-    printf("||| ---------------------------------------- INIZIO SIMULAZIONE ------------------------------------------------ |||\n");
+    printf("||| ---------------------------------------------- INIZIO SIMULAZIONE --------------------------------------------------------- |||\n");
 
     int attivazioni = 0, scissioni = 0, en_prod = 0, en_cons = 0, scorie = 0, atomi = 0;
     for (current_second = 0; current_second <= SIM_DURATION; current_second++) {
@@ -275,13 +275,13 @@ int main() {
         P(4, semid);
         P(5, semid);
         printf("\n\n\n");
-        printf("|--------------------------------------------------------------------------------------------------------------|\n");
-        printf("                                      SECONDO %d\n", current_second);
-        printf("|--------------------------------------------------------------------------------------------------------------|\n");
-        printf("|-----------------|---------------|----------------------|-------------------------|------------|--------------|\n");
-        printf("|   ATTIVAZIONI   |   SCISSIONI   |   ENERGIA PRODOTTA   |    ENERGIA CONSUMATA    |   SCORIE   |              |\n");
-        printf("|-----------------|---------------|----------------------|-------------------------|------------|--------------|\n");
-        printf("|     %3d         |    %3d        |        %3d           |              %3d        |  %3d       |              |\n",
+        printf("|-----------------------------------------------------------------------------------------------------------------------------|\n");
+        printf("                                                 SECONDO %d\n", current_second);
+        printf("|-----------------------------------------------------------------------------------------------------------------------------|\n");
+        printf("|-----------------|---------------|----------------------|-------------------------|------------|--------------|--------------|\n");
+        printf("|   ATTIVAZIONI   |   SCISSIONI   |   ENERGIA PRODOTTA   |    ENERGIA CONSUMATA    |   SCORIE   |              |              |\n");
+        printf("|-----------------|---------------|----------------------|-------------------------|------------|--------------|--------------|\n");
+        printf("|     %3d         |     %3d       |         %3d          |           %3d           |    %3d     |              |              |\n",
                dump_ptr->attivazione - attivazioni,
                dump_ptr->scissione - scissioni,
                dump_ptr->energia_prodotta - en_prod,
@@ -289,18 +289,19 @@ int main() {
                dump_ptr->scoria_prodotta - scorie);
         /*pids_ptr->indice-atomi);*/
         printf("\n");
-        printf("|-----------------|---------------|----------------------|-------------------------|------------|--------------|\n");
-        printf("| ATTIVAZIONI TOT | SCISSIONI TOT | ENERGIA PRODOTTA TOT |  ENERGIA CONSUMATA TOT  | SCORIE TOT | ATOMI TOTALI |\n");
-        printf("|-----------------|---------------|----------------------|-------------------------|------------|--------------|\n");
-        printf("|     %3d         |    %3d        |        %3d           |              %3d        |  %3d       |      %3d     |\n",
+        printf("|-----------------|---------------|----------------------|-------------------------|------------|--------------|--------------|\n");
+        printf("| ATTIVAZIONI TOT | SCISSIONI TOT | ENERGIA PRODOTTA TOT |  ENERGIA CONSUMATA TOT  | SCORIE TOT | ATOMI ATTIVI | ATOMI TOTALI |\n");
+        printf("|-----------------|---------------|----------------------|-------------------------|------------|--------------|--------------|\n");
+        printf("|     %3d         |     %3d       |         %3d          |           %3d           |    %3d     |      %3d     |      %3d     |\n",
                dump_ptr->attivazione,
                dump_ptr->scissione,
                dump_ptr->energia_prodotta,
                dump_ptr->energia_consumata,
                dump_ptr->scoria_prodotta,
-               pids_ptr->indice);
-        printf("|-----------------|---------------|----------------------|-------------------------|------------|--------------|\n");
-        printf("\n\n\n");
+               pids_ptr->indice,
+               dump_ptr->contatore_atomi);
+        printf("|-----------------|---------------|----------------------|-------------------------|------------|--------------|--------------|\n");
+        printf("\n");
         /**aggiornamento valori temporanei **/
         attivazioni = dump_ptr->attivazione;
         scissioni = dump_ptr->scissione;
@@ -313,6 +314,12 @@ int main() {
         V(3, semid);
         V(4, semid);
         V(5, semid);
+
+        P(3,semid);
+        printf("|-------------------------------------------------------CONSUMO ENERGIA %3d---------------------------------------------------|\n",ENERGY_DEMAND);
+        printf("\n\n\n");
+        dump_ptr->energia_consumata+=ENERGY_DEMAND;
+        V(3,semid);
         sleep(1);
     }
     /*************************** STATISTICHE (totali) **********************************************************/
@@ -382,7 +389,7 @@ int main() {
     shmctl(shmidInit, IPC_RMID, NULL);
     msgctl(msgid, IPC_RMID, NULL);
 
-    printf("\n||| ---------------------------------------- FINE SIMULAZIONE ------------------------------------------------ |||\n");
+    printf("\n||| ------------------------------------------------FINE SIMULAZIONE--------------------------------------------------------- |||\n");
 
     return 0;
 

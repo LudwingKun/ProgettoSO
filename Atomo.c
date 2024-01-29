@@ -88,7 +88,9 @@ int main(int argc, char *argv[]) {
                 dump_ptr->scoria_prodotta++;
                 V(5, semid);
 
-
+                P(6, semid);
+                dump_ptr->contatore_atomi++;
+                V(6, semid);
 
                 P(7, semid);
                 pos = trova_pos(pids_ptr->pids, &pids_ptr->indice, getpid());
@@ -121,6 +123,16 @@ int main(int argc, char *argv[]) {
                     P(2, semid);
                     dump_ptr->scissione++;
                     V(2, semid);
+
+                    P(6, semid);
+                    dump_ptr->contatore_atomi++;
+                    V(6, semid);
+
+                    P(3,semid);
+                    dump_ptr->energia_prodotta+=(energy(numero_atomico-num_figlio_r,num_figlio_r));
+                    printf("la scissione genera %d energia n1= %d e n2= %d\n", energy(numero_atomico-num_figlio_r,num_figlio_r),numero_atomico-num_figlio_r,num_figlio_r );
+                    V(3,semid);
+
                     printf("CHILD %d con numero atomico : %d \n", getpid(), num_figlio_r);
                     sprintf(args1[2], "%d", num_figlio_r);
                     if (execve("bin/atomo", args1, NULL) == -1) {
