@@ -6,13 +6,15 @@ int main() {
 
     /**************************DICHIARAZIONI DI VARIABILI QUI !!*************************************************/
     int i;
-    int N_ATOMI_INIT, ENERGY_DEMAND, MIN_N_ATOMICO, N_NUOVI_ATOMI, N_ATTIVATORE, N_ALIMENTAZIONE, N_ATOM_MAX, STEP_ALIMENTAZIONE, ENERGY_EXPLODE_THRESHOLD, SIM_DURATION, STEP_ATTIVATORE;
+    int N_ATOMI_INIT, ENERGY_DEMAND, MIN_N_ATOMICO, N_NUOVI_ATOMI, N_ATOM_MAX, STEP_ALIMENTAZIONE, ENERGY_EXPLODE_THRESHOLD, SIM_DURATION, STEP_ATTIVATORE;
     int pid_attivatore, pid_alimentazione;
     int current_second;
     int shmidInit, semid, shmid_pids, msgid, shmid_dump;
     int *shmidInit_ptr;
     atomi *pids_ptr;
     dump *dump_ptr;
+    int config = 0;
+    char *configuration;
 
     int numero_atomico; /*num spedito dal padre*/
     int num; /*num letto dall'atomo*/
@@ -25,18 +27,38 @@ int main() {
     char *args2[] = {"attivatore", buffer, NULL};
     char *args3[] = {"alimentazione", buffer, NULL};
 
+    printf("Quale configurazione scegli? scrivi 1 per timeout, 2 per explode, 3 per blackout, 4 per meltdown\n");
+    fscanf(stdin, "%d", &config);
+    switch (config) {
+        case 1:
+            printf("Hai scelto la configurazione che termina per timeout\n");
+            configuration = "config_timeout.txt";
+            break;
+        case 2:
+            printf("Hai scelto la configurazione che termina per explode\n");
+            configuration = "config_explode.txt";
+            break;
+        case 3:
+            printf("Hai scelto la configurazione che termina per blackout\n");
+            configuration = "config_blackout.txt";
+            break;
+        case 4:
+            printf("Hai scelto la configurazione che termina per meltdown\n");
+            configuration = "config_meltdown.txt";
+            break;
+
+    }
 
     /*************************************** LETTURA PARAMETRI *****************************************************/
-    FILE *file = fopen("config_1.txt", "r");
+    FILE *file = fopen((const char *) configuration, "r");
 
     if (file == NULL) {
         perror("Errore nell'apertura del file");
         exit(EXIT_FAILURE);
     }
     if (fscanf(file,
-               "N_ATOMI_INIT=%d\nN_ATTIVATORE=%d\nN_ALIMENTAZIONE=%d\nENERGY_DEMAND=%d\nN_ATOM_MAX=%d\nMIN_N_ATOMICO=%d\nSTEP_ATTIVATORE=%d\nSTEP_ALIMENTAZIONE=%d\nN_NUOVI_ATOMI=%d\nSIM_DURATION=%d\nENERGY_EXPLODE_THRESHOLD=%d\n",
-               &N_ATOMI_INIT, &N_ATTIVATORE, &N_ALIMENTAZIONE, &ENERGY_DEMAND, &N_ATOM_MAX, &MIN_N_ATOMICO,
-               &STEP_ATTIVATORE, &STEP_ALIMENTAZIONE, &N_NUOVI_ATOMI, &SIM_DURATION, &ENERGY_EXPLODE_THRESHOLD) != 11) {
+               "N_ATOMI_INIT=%d\nENERGY_DEMAND=%d\nN_ATOM_MAX=%d\nMIN_N_ATOMICO=%d\nSTEP_ATTIVATORE=%d\nSTEP_ALIMENTAZIONE=%d\nN_NUOVI_ATOMI=%d\nSIM_DURATION=%d\nENERGY_EXPLODE_THRESHOLD=%d\n",
+               &N_ATOMI_INIT, &ENERGY_DEMAND, &N_ATOM_MAX, &MIN_N_ATOMICO, &STEP_ATTIVATORE, &STEP_ALIMENTAZIONE, &N_NUOVI_ATOMI, &SIM_DURATION, &ENERGY_EXPLODE_THRESHOLD) != 9) {
         fprintf(stderr, "Errore nella lettura dei parametri di configurazione\n");
         exit(EXIT_FAILURE);
     }
@@ -266,65 +288,69 @@ int main() {
     printf("||| ---------------------------------------------- INIZIO SIMULAZIONE --------------------------------------------------------- |||\n");
 
     int attivazioni = 0, scissioni = 0, en_prod = 0, en_cons = 0, scorie = 0, atomi = 0;
-    for (current_second = 0; current_second <= SIM_DURATION; current_second++) {
 
-        /*************************** STATISTICHE (al sec) **********************************************************/
+    for (current_second = 0; current_second <= SIM_DURATION ; current_second++) {
         P(1, semid);
         P(2, semid);
         P(3, semid);
         P(4, semid);
         P(5, semid);
-        printf("\n\n\n");
-        printf("|-----------------------------------------------------------------------------------------------------------------------------|\n");
-        printf("                                                 SECONDO %d\n", current_second);
-        printf("|-----------------------------------------------------------------------------------------------------------------------------|\n");
-        printf("|-----------------|---------------|----------------------|-------------------------|------------|--------------|--------------|\n");
-        printf("|   ATTIVAZIONI   |   SCISSIONI   |   ENERGIA PRODOTTA   |    ENERGIA CONSUMATA    |   SCORIE   |              |              |\n");
-        printf("|-----------------|---------------|----------------------|-------------------------|------------|--------------|--------------|\n");
-        printf("|     %3d         |     %3d       |         %3d          |           %3d           |    %3d     |              |              |\n",
-               dump_ptr->attivazione - attivazioni,
-               dump_ptr->scissione - scissioni,
-               dump_ptr->energia_prodotta - en_prod,
-               dump_ptr->energia_consumata - en_cons,
-               dump_ptr->scoria_prodotta - scorie);
-        /*pids_ptr->indice-atomi);*/
-        printf("\n");
-        printf("|-----------------|---------------|----------------------|-------------------------|------------|--------------|--------------|\n");
-        printf("| ATTIVAZIONI TOT | SCISSIONI TOT | ENERGIA PRODOTTA TOT |  ENERGIA CONSUMATA TOT  | SCORIE TOT | ATOMI ATTIVI | ATOMI TOTALI |\n");
-        printf("|-----------------|---------------|----------------------|-------------------------|------------|--------------|--------------|\n");
-        printf("|     %3d         |     %3d       |         %3d          |           %3d           |    %3d     |      %3d     |      %3d     |\n",
-               dump_ptr->attivazione,
-               dump_ptr->scissione,
-               dump_ptr->energia_prodotta,
-               dump_ptr->energia_consumata,
-               dump_ptr->scoria_prodotta,
-               pids_ptr->indice,
-               dump_ptr->contatore_atomi);
-        printf("|-----------------|---------------|----------------------|-------------------------|------------|--------------|--------------|\n");
-        printf("\n");
-        /**aggiornamento valori temporanei **/
-        attivazioni = dump_ptr->attivazione;
-        scissioni = dump_ptr->scissione;
-        en_prod = dump_ptr->energia_prodotta;
-        en_cons = dump_ptr->energia_consumata;
-        scorie = dump_ptr->scoria_prodotta;
-        atomi = pids_ptr->indice;
-        V(1, semid);
-        V(2, semid);
-        V(3, semid);
-        V(4, semid);
-        V(5, semid);
+        /*if ((dump_ptr->energia_prodotta - dump_ptr->energia_consumata) > ENERGY_EXPLODE_THRESHOLD) {*/
+            /*************************** STATISTICHE (al sec) **********************************************************/
+            printf("\n\n\n");
+            printf("|-----------------------------------------------------------------------------------------------------------------------------|\n");
+            printf("                                                 SECONDO %d\n", current_second);
+            printf("|-----------------------------------------------------------------------------------------------------------------------------|\n");
+            printf("|-----------------|---------------|----------------------|-------------------------|------------|--------------|--------------|\n");
+            printf("|   ATTIVAZIONI   |   SCISSIONI   |   ENERGIA PRODOTTA   |    ENERGIA CONSUMATA    |   SCORIE   |              |              |\n");
+            printf("|-----------------|---------------|----------------------|-------------------------|------------|--------------|--------------|\n");
+            printf("|     %3d         |     %3d       |         %3d          |           %3d           |    %3d     |              |              |\n",
+                   dump_ptr->attivazione - attivazioni,
+                   dump_ptr->scissione - scissioni,
+                   dump_ptr->energia_prodotta - en_prod,
+                   dump_ptr->energia_consumata - en_cons,
+                   dump_ptr->scoria_prodotta - scorie);
+            /*pids_ptr->indice-atomi);*/
+            printf("\n");
+            printf("|-----------------|---------------|----------------------|-------------------------|------------|--------------|--------------|\n");
+            printf("| ATTIVAZIONI TOT | SCISSIONI TOT | ENERGIA PRODOTTA TOT |  ENERGIA CONSUMATA TOT  | SCORIE TOT | ATOMI ATTIVI | ATOMI TOTALI |\n");
+            printf("|-----------------|---------------|----------------------|-------------------------|------------|--------------|--------------|\n");
+            printf("|     %3d         |     %3d       |         %3d          |           %3d           |    %3d     |      %3d     |      %3d     |\n",
+                   dump_ptr->attivazione,
+                   dump_ptr->scissione,
+                   dump_ptr->energia_prodotta,
+                   dump_ptr->energia_consumata,
+                   dump_ptr->scoria_prodotta,
+                   pids_ptr->indice,
+                   dump_ptr->contatore_atomi);
+            printf("|-----------------|---------------|----------------------|-------------------------|------------|--------------|--------------|\n");
+            printf("\n");
+            /**aggiornamento valori temporanei **/
+            attivazioni = dump_ptr->attivazione;
+            scissioni = dump_ptr->scissione;
+            en_prod = dump_ptr->energia_prodotta;
+            en_cons = dump_ptr->energia_consumata;
+            scorie = dump_ptr->scoria_prodotta;
+            atomi = pids_ptr->indice;
+            V(1, semid);
+            V(2, semid);
+            V(3, semid);
+            V(4, semid);
+            V(5, semid);
 
-        P(3,semid);
-        printf("|-------------------------------------------------------CONSUMO ENERGIA %3d---------------------------------------------------|\n",ENERGY_DEMAND);
-        printf("\n\n\n");
-        dump_ptr->energia_consumata+=ENERGY_DEMAND;
-        V(3,semid);
-        sleep(1);
+            P(3, semid);
+            printf("|-------------------------------------------------------CONSUMO ENERGIA %3d---------------------------------------------------|\n",
+                   ENERGY_DEMAND);
+            printf("\n\n\n");
+            dump_ptr->energia_consumata += ENERGY_DEMAND;
+            V(3, semid);
+            sleep(1);
+        /*}
+        printf("");*/
     }
     /*************************** STATISTICHE (totali) **********************************************************/
 
-    //sigemtyset
+
     if (kill(pid_attivatore, SIGTERM) == 0) {
         printf("Segnale di terminazione inviato al processo con PID %d\n", pid_attivatore);
     } else {
@@ -388,6 +414,8 @@ int main() {
     shmctl(shmid_pids, IPC_RMID, NULL);
     shmctl(shmidInit, IPC_RMID, NULL);
     msgctl(msgid, IPC_RMID, NULL);
+
+    printf("La simulazione e' terminata perche' sono trascorsi %d secondi\n", SIM_DURATION);
 
     printf("\n||| ------------------------------------------------FINE SIMULAZIONE--------------------------------------------------------- |||\n");
 
