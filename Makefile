@@ -1,4 +1,4 @@
-CFLAGS = -Wvla -Wextra -Werror  -D_POSIX_C_SOURCE=200809L
+CFLAGS = -Wvla -Wextra -Werror -D_POSIX_C_SOURCE=200809L -D_GNU_SOURCE
 
 all: master atomo attivatore alimentazione
 

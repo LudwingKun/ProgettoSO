@@ -88,9 +88,9 @@ int main(int argc, char *argv[]) {
                 dump_ptr->scoria_prodotta++;
                 V(5, semid);
 
-                P(6, semid);
+                /*P(6, semid);
                 dump_ptr->contatore_atomi++;
-                V(6, semid);
+                V(6, semid);*/
 
                 P(7, semid);
                 pos = trova_pos(pids_ptr->pids, &pids_ptr->indice, getpid());

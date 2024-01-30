@@ -175,14 +175,14 @@ int main() {
     }
 
     /**init array pids**/
-    /*P(6, semid);
+    P(6, semid);
     dump_ptr->contatore_atomi = 0;
-    V(6, semid);*/
+    V(6, semid);
 
-    /*P(7, semid);
+    P(7, semid);
     pids_ptr->indice = 0;
     pids_ptr->dimensione = 100;
-    V(7, semid);*/
+    V(7, semid);
     /*************************************** FINE INIZIALIZZAZIONI *************************************************************/
 
     for (i = 0; i < N_ATOMI_INIT; i++) {
@@ -289,65 +289,84 @@ int main() {
 
     int attivazioni = 0, scissioni = 0, en_prod = 0, en_cons = 0, scorie = 0, atomi = 0;
 
-    for (current_second = 0; current_second <= SIM_DURATION ; current_second++) {
+    current_second = 0;
+
+
+    P(3, semid);
+    P(4, semid);
+    do {
         P(1, semid);
         P(2, semid);
-        P(3, semid);
-        P(4, semid);
         P(5, semid);
-        /*if ((dump_ptr->energia_prodotta - dump_ptr->energia_consumata) > ENERGY_EXPLODE_THRESHOLD) {*/
-            /*************************** STATISTICHE (al sec) **********************************************************/
-            printf("\n\n\n");
-            printf("|-----------------------------------------------------------------------------------------------------------------------------|\n");
-            printf("                                                 SECONDO %d\n", current_second);
-            printf("|-----------------------------------------------------------------------------------------------------------------------------|\n");
-            printf("|-----------------|---------------|----------------------|-------------------------|------------|--------------|--------------|\n");
-            printf("|   ATTIVAZIONI   |   SCISSIONI   |   ENERGIA PRODOTTA   |    ENERGIA CONSUMATA    |   SCORIE   |              |              |\n");
-            printf("|-----------------|---------------|----------------------|-------------------------|------------|--------------|--------------|\n");
-            printf("|     %3d         |     %3d       |         %3d          |           %3d           |    %3d     |              |              |\n",
-                   dump_ptr->attivazione - attivazioni,
-                   dump_ptr->scissione - scissioni,
-                   dump_ptr->energia_prodotta - en_prod,
-                   dump_ptr->energia_consumata - en_cons,
-                   dump_ptr->scoria_prodotta - scorie);
-            /*pids_ptr->indice-atomi);*/
-            printf("\n");
-            printf("|-----------------|---------------|----------------------|-------------------------|------------|--------------|--------------|\n");
-            printf("| ATTIVAZIONI TOT | SCISSIONI TOT | ENERGIA PRODOTTA TOT |  ENERGIA CONSUMATA TOT  | SCORIE TOT | ATOMI ATTIVI | ATOMI TOTALI |\n");
-            printf("|-----------------|---------------|----------------------|-------------------------|------------|--------------|--------------|\n");
-            printf("|     %3d         |     %3d       |         %3d          |           %3d           |    %3d     |      %3d     |      %3d     |\n",
-                   dump_ptr->attivazione,
-                   dump_ptr->scissione,
-                   dump_ptr->energia_prodotta,
-                   dump_ptr->energia_consumata,
-                   dump_ptr->scoria_prodotta,
-                   pids_ptr->indice,
-                   dump_ptr->contatore_atomi);
-            printf("|-----------------|---------------|----------------------|-------------------------|------------|--------------|--------------|\n");
-            printf("\n");
-            /**aggiornamento valori temporanei **/
-            attivazioni = dump_ptr->attivazione;
-            scissioni = dump_ptr->scissione;
-            en_prod = dump_ptr->energia_prodotta;
-            en_cons = dump_ptr->energia_consumata;
-            scorie = dump_ptr->scoria_prodotta;
-            atomi = pids_ptr->indice;
-            V(1, semid);
-            V(2, semid);
-            V(3, semid);
-            V(4, semid);
-            V(5, semid);
+        /*************************** STATISTICHE (al sec) **********************************************************/
+        printf("\n\n\n");
+        printf("|---------------------------------------------------------------------------------------------------------------------------------------|\n");
+        printf("                                                 SECONDO %d\n", current_second);
+        printf("|---------------------------------------------------------------------------------------------------------------------------------------|\n");
+        printf("|-----------------|---------------|----------------------|-------------------------|------------|--------------|------------------------|\n");
+        printf("|   ATTIVAZIONI   |   SCISSIONI   |   ENERGIA PRODOTTA   |    ENERGIA CONSUMATA    |   SCORIE   |              |   ENERGIA DISPONIBILE  |\n");
+        printf("|-----------------|---------------|----------------------|-------------------------|------------|--------------|------------------------|\n");
+        printf("|     %3d         |     %3d       |         %3d          |           %3d           |    %3d     |              |         %3d            |\n",
+               dump_ptr->attivazione - attivazioni,
+               dump_ptr->scissione - scissioni,
+               dump_ptr->energia_prodotta - en_prod,
+               dump_ptr->energia_consumata - en_cons,
+               dump_ptr->scoria_prodotta - scorie,
+               dump_ptr->energia_prodotta - dump_ptr->energia_consumata);
+        /*pids_ptr->indice-atomi);*/
+        printf("\n");
+        printf("|-----------------|---------------|----------------------|-------------------------|------------|--------------|--------------|\n");
+        printf("| ATTIVAZIONI TOT | SCISSIONI TOT | ENERGIA PRODOTTA TOT |  ENERGIA CONSUMATA TOT  | SCORIE TOT | ATOMI ATTIVI | ATOMI TOTALI |\n");
+        printf("|-----------------|---------------|----------------------|-------------------------|------------|--------------|--------------|\n");
+        printf("|     %3d         |     %3d       |         %3d          |           %3d           |    %3d     |      %3d     |      %3d     |\n",
+               dump_ptr->attivazione,
+               dump_ptr->scissione,
+               dump_ptr->energia_prodotta,
+               dump_ptr->energia_consumata,
+               dump_ptr->scoria_prodotta,
+               pids_ptr->indice,
+               dump_ptr->contatore_atomi);
+        printf("|-----------------|---------------|----------------------|-------------------------|------------|--------------|--------------|\n");
+        printf("\n");
+        /**aggiornamento valori temporanei **/
+        attivazioni = dump_ptr->attivazione;
+        scissioni = dump_ptr->scissione;
+        en_prod = dump_ptr->energia_prodotta;
+        en_cons = dump_ptr->energia_consumata;
+        scorie = dump_ptr->scoria_prodotta;
+        atomi = pids_ptr->indice;
+        V(1, semid);
+        V(2, semid);
+        V(3, semid);
+        V(4, semid);
+        V(5, semid);
 
-            P(3, semid);
-            printf("|-------------------------------------------------------CONSUMO ENERGIA %3d---------------------------------------------------|\n",
-                   ENERGY_DEMAND);
-            printf("\n\n\n");
-            dump_ptr->energia_consumata += ENERGY_DEMAND;
-            V(3, semid);
-            sleep(1);
-        /*}
-        printf("");*/
+        P(3, semid);
+        printf("|-------------------------------------------------------CONSUMO ENERGIA %3d---------------------------------------------------|\n",
+               ENERGY_DEMAND);
+        printf("\n\n\n");
+        dump_ptr->energia_consumata += ENERGY_DEMAND;
+        V(3, semid);
+        sleep(1);
+        current_second++;
+    } while((current_second <= SIM_DURATION) && ((dump_ptr->energia_prodotta - dump_ptr->energia_consumata) < ENERGY_EXPLODE_THRESHOLD) && (dump_ptr->energia_prodotta - dump_ptr->energia_consumata >= 0));
+
+
+    P(3, semid);
+    P(4, semid);
+    if (current_second > SIM_DURATION) {
+        printf("La simulazione e' terminata perche' sono trascorsi %d secondi quindi per TIMEOUT\n", SIM_DURATION);
+    } else if ((dump_ptr->energia_prodotta - dump_ptr->energia_consumata) >= ENERGY_EXPLODE_THRESHOLD) {
+        printf("La simulazione e' terminata per EXPLODE, l'energia liberata e' maggiore di %d\n",
+               ENERGY_EXPLODE_THRESHOLD);
+        printf("Energia liberata: %d\n", (dump_ptr->energia_prodotta - dump_ptr->energia_consumata));
+    } else if (dump_ptr->energia_prodotta - dump_ptr->energia_consumata < 0) {
+        printf("dump_ptr->energia_prodotta - dump_ptr->energia_consumata =  %d\n", dump_ptr->energia_prodotta - dump_ptr->energia_consumata);
+        printf("Caso BLACKOUT \n\n\n");
     }
+    V(3, semid);
+    V(4, semid);
+
     /*************************** STATISTICHE (totali) **********************************************************/
 
 
@@ -415,7 +434,6 @@ int main() {
     shmctl(shmidInit, IPC_RMID, NULL);
     msgctl(msgid, IPC_RMID, NULL);
 
-    printf("La simulazione e' terminata perche' sono trascorsi %d secondi\n", SIM_DURATION);
 
     printf("\n||| ------------------------------------------------FINE SIMULAZIONE--------------------------------------------------------- |||\n");
 
