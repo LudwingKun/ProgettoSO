@@ -32,7 +32,7 @@ int main(int argc, char *argv[]) {
 
     shmidInit = atoi(argv[1]);
     numero_atomico = atoi(argv[2]);
-    printf("numero atomico dell'atomo %d e' ==== %d\n", getpid(), numero_atomico);
+/*    printf("numero atomico dell'atomo %d e' ==== %d\n", getpid(), numero_atomico);*/
 
     /*Collega la memoria condivisa Init al puntatore*/
     shmidInit_ptr = (int *) shmat(shmidInit, NULL, 0);
@@ -63,7 +63,7 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 
-    printf("Atomo %d waiting for 0 before fire execve \n", getpid());
+
     sem_wait_for_zero(semid);
 
     while (1) {
@@ -82,26 +82,20 @@ int main(int argc, char *argv[]) {
         if (num_bytes > 0) {
             /*printf("messaggio ricevuto per pid %d: %s\n\n", getpid(), myMessage.msg_text);*/
             if (numero_atomico <= MIN_N_ATOMICO) {
-                printf("CHILD %d va in scorie e termina \n", getpid());
+           /*     printf("CHILD %d va in scorie e termina \n", getpid());*/
 
                 P(5, semid);
                 dump_ptr->scoria_prodotta++;
                 V(5, semid);
 
-                /*P(6, semid);
-                dump_ptr->contatore_atomi++;
-                V(6, semid);*/
+
 
                 P(7, semid);
                 pos = trova_pos(pids_ptr->pids, &pids_ptr->indice, getpid());
-                printf("DIM VETTORE prima : %d \n", pids_ptr->indice);
-                printf("POS TROVATA .%d \n", pos);
                 rimuovi_elemento(pids_ptr->pids, &pids_ptr->indice, pos);
-                printf("DIM VETTORE: %d \n", pids_ptr->indice);
                 V(7, semid);
 
                 gestore_segnale();
-               /* exit(EXIT_SUCCESS);*/
             }
             if (pipe(fd) == -1) {
                 perror("fail in pipe");
@@ -113,7 +107,6 @@ int main(int argc, char *argv[]) {
                     TEST_ERROR
                     exit(EXIT_FAILURE);
                 case 0:
-                    printf("CHILD %d divisione da atomo : %d  \n ", getpid(), getppid());
                     lettura_pipe(fd, &num_figlio_r);
                     /**aggiornare DUMP**/
                     P(7,semid);
@@ -130,10 +123,8 @@ int main(int argc, char *argv[]) {
 
                     P(3,semid);
                     dump_ptr->energia_prodotta+=(energy(numero_atomico-num_figlio_r,num_figlio_r));
-                    printf("la scissione genera %d energia n1= %d e n2= %d\n", energy(numero_atomico-num_figlio_r,num_figlio_r),numero_atomico-num_figlio_r,num_figlio_r );
                     V(3,semid);
 
-                    printf("CHILD %d con numero atomico : %d \n", getpid(), num_figlio_r);
                     sprintf(args1[2], "%d", num_figlio_r);
                     if (execve("bin/atomo", args1, NULL) == -1) {
                         perror("execve");
@@ -144,7 +135,6 @@ int main(int argc, char *argv[]) {
                 default:
                     num_figlo_i = numero_atomico - numero_atomico / 2;
                     numero_atomico = numero_atomico - num_figlo_i;
-                    printf("ATOMO %d ha nuovo num atomico %d \n", getpid(), numero_atomico);
                     scrittura_pipe(fd, &num_figlo_i);
                     break;
             }
@@ -168,7 +158,6 @@ void gestore_segnale() {
         perror("shmdt");
         exit(EXIT_FAILURE);
     }
-    printf("Detach in atomo avvenuto\n");
     exit(EXIT_SUCCESS);
 }
 

@@ -6,9 +6,10 @@ int main() {
 
     /**************************DICHIARAZIONI DI VARIABILI QUI !!*************************************************/
     int i;
-    int N_ATOMI_INIT, ENERGY_DEMAND, MIN_N_ATOMICO, N_NUOVI_ATOMI, N_ATOM_MAX, STEP_ALIMENTAZIONE, ENERGY_EXPLODE_THRESHOLD, SIM_DURATION, STEP_ATTIVATORE;
+    int N_ATOMI_INIT, ENERGY_DEMAND, MIN_N_ATOMICO, N_NUOVI_ATOMI, N_ATOM_MAX, STEP_ALIMENTAZIONE,
+            ENERGY_EXPLODE_THRESHOLD, SIM_DURATION, STEP_ATTIVATORE;
     int pid_attivatore, pid_alimentazione;
-    int current_second;
+    int current_second, continua;
     int shmidInit, semid, shmid_pids, msgid, shmid_dump;
     int *shmidInit_ptr;
     atomi *pids_ptr;
@@ -58,7 +59,8 @@ int main() {
     }
     if (fscanf(file,
                "N_ATOMI_INIT=%d\nENERGY_DEMAND=%d\nN_ATOM_MAX=%d\nMIN_N_ATOMICO=%d\nSTEP_ATTIVATORE=%d\nSTEP_ALIMENTAZIONE=%d\nN_NUOVI_ATOMI=%d\nSIM_DURATION=%d\nENERGY_EXPLODE_THRESHOLD=%d\n",
-               &N_ATOMI_INIT, &ENERGY_DEMAND, &N_ATOM_MAX, &MIN_N_ATOMICO, &STEP_ATTIVATORE, &STEP_ALIMENTAZIONE, &N_NUOVI_ATOMI, &SIM_DURATION, &ENERGY_EXPLODE_THRESHOLD) != 9) {
+               &N_ATOMI_INIT, &ENERGY_DEMAND, &N_ATOM_MAX, &MIN_N_ATOMICO, &STEP_ATTIVATORE, &STEP_ALIMENTAZIONE,
+               &N_NUOVI_ATOMI, &SIM_DURATION, &ENERGY_EXPLODE_THRESHOLD) != 9) {
         fprintf(stderr, "Errore nella lettura dei parametri di configurazione\n");
         exit(EXIT_FAILURE);
     }
@@ -66,7 +68,14 @@ int main() {
     fclose(file);
     /*************************************** FINE LETTURA PARAMETRI *****************************************************/
 
-
+    printf("\nLA CONFIGURAZIONE:\n"
+           "Numero atomi iniziali: %d\n"
+           "Durata simulazione: %d\n"
+           "Step Alimentazione : %d  nanosecondi\n"
+           "Numero nuovi atomi creati da Alimentazione : %d\n"
+           "Step Attivatore : %d secondi\n"
+           "Numero di attivazioni : %d \n\n", N_ATOMI_INIT, SIM_DURATION, STEP_ALIMENTAZIONE, N_NUOVI_ATOMI,
+           STEP_ATTIVATORE, 3);
 
     /*************************************** CREAZIONE STRUTTURE *****************************************************/
 
@@ -85,7 +94,6 @@ int main() {
         perror("shmat");
         return 1;
     }
-/*TODO: CAMBIARE QUA**/
     /* Creazione MEMORIA CONDIVISA per array pid */
     shmid_pids = shmget(IPC_PRIVATE, sizeof(atomi), IPC_CREAT | 0666);
     if (shmid_pids == -1) {
@@ -181,7 +189,7 @@ int main() {
 
     P(7, semid);
     pids_ptr->indice = 0;
-    pids_ptr->dimensione = 100;
+    pids_ptr->dimensione = 1000;
     V(7, semid);
     /*************************************** FINE INIZIALIZZAZIONI *************************************************************/
 
@@ -196,7 +204,7 @@ int main() {
                 exit(EXIT_FAILURE);
             case 0:
                 sem_down(semid); /*decremento del semaforo*/
-
+                printf("Atomo(initial) %d waiting for 0 before fire execve \n", getpid());
                 P(6, semid);
                 dump_ptr->contatore_atomi++;
                 V(6, semid);
@@ -204,7 +212,6 @@ int main() {
                 P(7, semid);
                 pids_ptr->indice++;
                 pids_ptr->pids[i] = getpid();
-                printf("FIGLIO %d \n", getpid());
                 V(7, semid);
 
                 /*ricezione numero atomico*/
@@ -216,7 +223,6 @@ int main() {
                 TEST_ERROR
                 sprintf((char *) args1[2], "%d", num); /*conversione a stringa*/
 
-                printf("!!!!LETTURA Atomo_pid %d da MASTER: %d\n", getpid(), getppid());
 
                 if (execve("bin/atomo", args1, NULL) == -1) {
                     perror("execve");
@@ -276,11 +282,7 @@ int main() {
     }
     sleep(5);
     sem_down(semid);
-    P(7, semid);
-    for (int z = 0; z < 3; z++) {
-        printf("YOYO: %d \n", pids_ptr->pids[z]);
-    }
-    V(7, semid);
+
 
     printf("Master  %d waiting for 0...\n", getpid());
     sem_wait_for_zero(semid);
@@ -290,14 +292,12 @@ int main() {
     int attivazioni = 0, scissioni = 0, en_prod = 0, en_cons = 0, scorie = 0, atomi = 0;
 
     current_second = 0;
+    continua = 1;
 
+    while (current_second <= SIM_DURATION && continua) {
+        for (int t = 1; t < 6; t++)
+            P(t, semid);
 
-    P(3, semid);
-    P(4, semid);
-    do {
-        P(1, semid);
-        P(2, semid);
-        P(5, semid);
         /*************************** STATISTICHE (al sec) **********************************************************/
         printf("\n\n\n");
         printf("|---------------------------------------------------------------------------------------------------------------------------------------|\n");
@@ -335,39 +335,27 @@ int main() {
         en_cons = dump_ptr->energia_consumata;
         scorie = dump_ptr->scoria_prodotta;
         atomi = pids_ptr->indice;
-        V(1, semid);
-        V(2, semid);
-        V(3, semid);
-        V(4, semid);
-        V(5, semid);
+        /**controllo per esplosione e per blackout**/
+        if (dump_ptr->energia_prodotta - dump_ptr->energia_consumata > ENERGY_EXPLODE_THRESHOLD ||
+            dump_ptr->energia_prodotta - dump_ptr->energia_consumata < 0) {
+            continua = 0;
+        }
 
-        P(3, semid);
-        printf("|-------------------------------------------------------CONSUMO ENERGIA %3d---------------------------------------------------|\n",
-               ENERGY_DEMAND);
-        printf("\n\n\n");
-        dump_ptr->energia_consumata += ENERGY_DEMAND;
-        V(3, semid);
+        for (int m = 1; m < 6; m++)
+            V(m, semid);
+        if (continua > 0) {
+            P(3, semid);
+            printf("|-------------------------------------------------------CONSUMO ENERGIA %3d---------------------------------------------------|\n",
+                   ENERGY_DEMAND);
+            printf("\n\n\n");
+            dump_ptr->energia_consumata += ENERGY_DEMAND;
+            V(3, semid);
+        }
+
         sleep(1);
         current_second++;
-    } while((current_second <= SIM_DURATION) && ((dump_ptr->energia_prodotta - dump_ptr->energia_consumata) < ENERGY_EXPLODE_THRESHOLD) && (dump_ptr->energia_prodotta - dump_ptr->energia_consumata >= 0));
-
-
-    P(3, semid);
-    P(4, semid);
-    if (current_second > SIM_DURATION) {
-        printf("La simulazione e' terminata perche' sono trascorsi %d secondi quindi per TIMEOUT\n", SIM_DURATION);
-    } else if ((dump_ptr->energia_prodotta - dump_ptr->energia_consumata) >= ENERGY_EXPLODE_THRESHOLD) {
-        printf("La simulazione e' terminata per EXPLODE, l'energia liberata e' maggiore di %d\n",
-               ENERGY_EXPLODE_THRESHOLD);
-        printf("Energia liberata: %d\n", (dump_ptr->energia_prodotta - dump_ptr->energia_consumata));
-    } else if (dump_ptr->energia_prodotta - dump_ptr->energia_consumata < 0) {
-        printf("dump_ptr->energia_prodotta - dump_ptr->energia_consumata =  %d\n", dump_ptr->energia_prodotta - dump_ptr->energia_consumata);
-        printf("Caso BLACKOUT \n\n\n");
     }
-    V(3, semid);
-    V(4, semid);
-
-    /*************************** STATISTICHE (totali) **********************************************************/
+    printf("\n\nINIZIA LA TERMINAZIONE DEI PROCESSI \n\n\n");
 
 
     if (kill(pid_attivatore, SIGTERM) == 0) {
@@ -379,6 +367,7 @@ int main() {
 
     if (kill(pid_alimentazione, SIGTERM) == 0) {
         printf("Segnale di terminazione inviato al processo con PID %d\n", pid_alimentazione);
+
     } else {
         perror("Errore durante l'invio del segnale");
         return 1;
@@ -393,7 +382,23 @@ int main() {
         }
     }
     V(7, semid);
-    sleep(5);
+    printf("Atomi staccati dalla memoria condivisa: %d\n", pids_ptr->indice);
+    sleep(3);
+
+
+    if (current_second > SIM_DURATION) {
+        printf("La simulazione e' terminata perche' sono trascorsi %d secondi quindi per TIMEOUT\n", SIM_DURATION);
+    } else if ((en_prod-en_cons) >= ENERGY_EXPLODE_THRESHOLD) {
+        printf("La simulazione e' terminata per EXPLODE, l'energia liberata e' maggiore di %d\n",
+               ENERGY_EXPLODE_THRESHOLD);
+        printf("Energia liberata: %d\n", (dump_ptr->energia_prodotta - dump_ptr->energia_consumata));
+    } else if (en_prod - en_cons < 0) {
+        printf("dump_ptr->energia_prodotta - dump_ptr->energia_consumata =  %d\n",
+               -en_cons + en_prod);
+        printf("Caso BLACKOUT \n\n\n");
+    }
+
+    /*************************** STATISTICHE (totali) **********************************************************/
 
     /*Questa sleep serve sennò il master finisce prima degli altri processi*/
 

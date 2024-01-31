@@ -16,7 +16,6 @@ int main(int argc, char *argv[]) {
     sa.sa_handler = gestore_segnale;
     sigaction(SIGTERM, &sa, NULL);
 
-    printf("HELLO DA ATTIVATORE.... \n");
     if (argc != 2) {
         fprintf(stderr, "Error, wrong number of argument for atomo\n");
         exit(EXIT_FAILURE);
@@ -36,13 +35,6 @@ int main(int argc, char *argv[]) {
     shmid = shmidInit_ptr[8];
     msgid = shmidInit_ptr[11];
 
-/*
-    printf("STEP_ATTIVATORE: %d\n", STEP_ATTIVATORE);
-    printf("semid: %d\n", semid);
-    printf("shmidReport: %d\n", shmidReport);
-    printf("shmid: %d\n", shmid);
-    printf("msgid: %d\n", msgid);
-*/
 
 
     /* detach memoria condivisa per init */
@@ -74,16 +66,12 @@ int main(int argc, char *argv[]) {
     /*sleep(STEP_ATTIVATORE);*/
     while(1) {
         i=0;
-        int casuali[3];
+        int casuali[10];
         P(7, semid );
-        for(int k = 0; k < 3; k++ ){
+        for(int k = 0; k < 10; k++ ){
             casuali[k] = random_btw(0, pids_ptr->indice);
         }
-        /*printf("Attivatore stampa indiceeeee %d\n", pids_ptr->indice );
-        for(int f = 0; f <pids_ptr->indice; f++){
-            printf("PID LETTI :%d con i %d \n", pids_ptr->pids[f], f);
-        }*/
-        while (i < 3) {
+        while (i < 10) {
             myMessage.msg_type = pids_ptr->pids[casuali[i]];
             num_bytes = sprintf(myMessage.msg_text, "scissione");
             msgsnd(msgid, &myMessage, num_bytes, 0);

@@ -122,7 +122,7 @@ typedef struct message {
 typedef struct Atomi{
     int indice;
     int dimensione;
-    int pids[100];
+    int pids[1000];
 }atomi;
 
 #endif

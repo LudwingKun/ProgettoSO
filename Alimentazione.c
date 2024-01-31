@@ -17,10 +17,11 @@ int main(int argc, char *argv[]) {
     struct sigaction sa;
     sa.sa_handler = gestore_segnale;
     sigaction(SIGTERM, &sa, NULL);
+    struct timespec structtimespec;
 
 
     if (argc != 2) {
-        fprintf (stderr, "Error, wrong number of argument for atomo\n");
+        fprintf (stderr, "Error, wrong number of argument for Alimentazione\n");
         exit (EXIT_FAILURE);
     }
 
@@ -67,8 +68,9 @@ int main(int argc, char *argv[]) {
 
     printf ("Alimentazione waiting for zero\n");
     sem_wait_for_zero (semid);
-
-    sleep(STEP_ALIMENTAZIONE);
+    structtimespec.tv_nsec = STEP_ALIMENTAZIONE;
+    structtimespec.tv_sec = 0;
+    nanosleep(&structtimespec, NULL);
     while (1) {
         for (i = 0; i < N_NUOVI_ATOMI; i++) {
             if (pipe (file_pipe) == -1) {
@@ -81,14 +83,14 @@ int main(int argc, char *argv[]) {
                     perror ("fork");
                     exit (EXIT_FAILURE);
                 case 0:
+                    P(7, semid);
+                    aggiungi_elemento(pids_ptr->pids, &pids_ptr->dimensione, &pids_ptr->indice, getpid());
+                    V(7, semid);
+
                     /*printf ("Atomo_Alimentatore_pid: %d\n", getpid());*/
                     P(6, semid);
                     dump_ptr->contatore_atomi++;
                     V(6, semid);
-
-                    P(7, semid);
-                    aggiungi_elemento(pids_ptr->pids, &pids_ptr->dimensione, &pids_ptr->indice, getpid());
-                    V(7, semid);
 
                     close (file_pipe[1]); /*chiudi scrittura*/
                     sleep (1);
@@ -97,7 +99,6 @@ int main(int argc, char *argv[]) {
                     close (file_pipe[0]);
                     /*TEST_ERROR*/
                     sprintf(args1[2], "%d", num);
-                    printf("!!!!LETTURA Atomo_pid da ALIMENTAZIONE: %d\n", getpid());
                     if (execve("bin/atomo", args1, NULL) == -1) {
                         perror("execve");
                         exit(EXIT_FAILURE);
@@ -113,7 +114,7 @@ int main(int argc, char *argv[]) {
             }
         }
         close (file_pipe[1]);
-        sleep(STEP_ALIMENTAZIONE);
+        nanosleep(&structtimespec, NULL);
     }
 }
 
@@ -123,10 +124,9 @@ void gestore_segnale() {
 
     /* detach memoria condivisa dal processo*/
     if (shmdt(dump_ptr) == -1) {
-        perror("shmdt");
+        perror("shmdt fail in Alimentazione");
         exit(EXIT_FAILURE);
     }
 
-    printf("Detach in alimentazione avvenuto\n");
     exit(EXIT_SUCCESS);
 }
