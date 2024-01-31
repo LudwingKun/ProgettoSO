@@ -37,7 +37,7 @@ int main(int argc, char *argv[]) {
     /*Collega la memoria condivisa Init al puntatore*/
     shmidInit_ptr = (int *) shmat(shmidInit, NULL, 0);
     if ((int *) shmidInit_ptr == (void *) (-1)) {
-        perror("shmat fail");
+        perror("shmat shmidInit fail in atomo");
         exit(EXIT_FAILURE);
     }
     sprintf(buffer, "%d", shmidInit);
@@ -49,17 +49,17 @@ int main(int argc, char *argv[]) {
 
     pids_ptr = (atomi *) shmat(pids_id, NULL, 0);
     if ((int *) pids_ptr == (void *) (-1)) {
-        perror("shmat fail");
+        perror("shmat pids_id fail in atomo");
         exit(EXIT_FAILURE);
     }
     dump_ptr = (struct Dump *) shmat(dump_id, NULL, 0);
     if ((struct Dump *) dump_ptr == (struct Dump *) (-1)) {
-        perror("shmat fail");
+        perror("shmat dump_id fail in atomo");
         exit(EXIT_FAILURE);
     }
     /* detach memoria condivisa per array pid*/
     if (shmdt(shmidInit_ptr) == -1) {
-        perror("shmdt");
+        perror("shmdt shmidInit_ptr fail in atomo");
         exit(EXIT_FAILURE);
     }
 
@@ -98,7 +98,7 @@ int main(int argc, char *argv[]) {
                 gestore_segnale();
             }
             if (pipe(fd) == -1) {
-                perror("fail in pipe");
+                perror("fail in pipe in atomo");
                 TEST_ERROR
                 exit(EXIT_FAILURE);
             }
@@ -127,7 +127,7 @@ int main(int argc, char *argv[]) {
 
                     sprintf(args1[2], "%d", num_figlio_r);
                     if (execve("bin/atomo", args1, NULL) == -1) {
-                        perror("execve");
+                        perror("execve fail in atomo");
                         exit(EXIT_FAILURE);
                     }
                     exit (EXIT_FAILURE);
@@ -149,13 +149,13 @@ int main(int argc, char *argv[]) {
 void gestore_segnale() {
     /*detach memoria condivisa per array pid*/
     if (shmdt(pids_ptr) == -1) {
-        perror("shmdt");
+        perror("shmdt pids_ptr in atomo");
         exit(EXIT_FAILURE);
     }
 
     /* detach memoria condivisa dal processo*/
     if (shmdt(dump_ptr) == -1) {
-        perror("shmdt");
+        perror("shmdt dump_ptr in atomo");
         exit(EXIT_FAILURE);
     }
     exit(EXIT_SUCCESS);

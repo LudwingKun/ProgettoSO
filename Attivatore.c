@@ -25,7 +25,7 @@ int main(int argc, char *argv[]) {
     /*Collega la memoria condivisa Init al puntatore*/
     shmidInit_ptr = (int *) shmat(shmidInit, NULL, 0);
     if ((int *) shmidInit_ptr == (void *) (-1)) {
-        perror("shmat fail");
+        perror("shmat shmidInit_ptr fail in attivatore");
         exit(EXIT_FAILURE);
     }
 
@@ -39,7 +39,7 @@ int main(int argc, char *argv[]) {
 
     /* detach memoria condivisa per init */
     if (shmdt(shmidInit_ptr) == -1) {
-        perror("shmdt");
+        perror("shmdt shmidInit_ptr fail in attivatore");
         exit(EXIT_FAILURE);
     }
 
@@ -48,7 +48,7 @@ int main(int argc, char *argv[]) {
     /*Collega la memoria condivisa Report al puntatore*/
     dump_ptr = (struct Dump *) shmat(shmidReport, NULL, 0);
     if ((struct Dump *) dump_ptr == (void *) (-1)) {
-        perror("shmat fail");
+        perror("shmat puntatore dump fail in attivatore");
         exit(EXIT_FAILURE);
     }
 
@@ -92,13 +92,13 @@ int main(int argc, char *argv[]) {
 void gestore_segnale() {
     /*detach memoria condivisa per array pid*/
     if (shmdt(pids_ptr) == -1) {
-        perror("shmdt");
+        perror("shmdt puntatore pids fail in attivatore");
         exit(EXIT_FAILURE);
     }
 
     /* detach memoria condivisa dal processo*/
     if (shmdt(dump_ptr) == -1) {
-        perror("shmdt");
+        perror("shmdt puntatore dump fail in attivatore");
         exit(EXIT_FAILURE);
     }
     printf("Detach in attivatore avvenuto\n");

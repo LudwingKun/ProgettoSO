@@ -31,7 +31,7 @@ int main(int argc, char *argv[]) {
     /*Collega la memoria condivisa Init al puntatore*/
     shmidInit_ptr = (int *) shmat (shmidInit, NULL, 0);
     if ((int *) shmidInit_ptr == (void *) (-1)) {
-        perror ("shmat fail");
+        perror ("shmat shmidInit fail in alimentazione");
         exit (EXIT_FAILURE);
     }
 
@@ -44,7 +44,7 @@ int main(int argc, char *argv[]) {
 
     /* detach memoria condivisa per init */
     if (shmdt (shmidInit_ptr) == -1) {
-        perror ("shmdt");
+        perror ("shmdt shmidInit_ptr in alimentazione");
         exit (EXIT_FAILURE);
     }
 /**Collegamento allla memoria condivisa per i pids**/
@@ -57,7 +57,7 @@ int main(int argc, char *argv[]) {
     /*Collega la memoria condivisa dump al puntatore*/
     dump_ptr = (struct Dump *) shmat(dump_id, NULL, 0);
     if ((struct Dump *) dump_ptr == (struct Dump *) (-1)) {
-        perror("shmat fail");
+        perror("shmat dump_id fail in alimentazione");
         exit(EXIT_FAILURE);
     }
 
@@ -74,7 +74,7 @@ int main(int argc, char *argv[]) {
     while (1) {
         for (i = 0; i < N_NUOVI_ATOMI; i++) {
             if (pipe (file_pipe) == -1) {
-                perror ("fail in pipe");
+                perror ("fail in pipe alimentazione");
                 exit (EXIT_FAILURE);
             }
             atomi_alimentatore[i] = fork();
@@ -97,6 +97,10 @@ int main(int argc, char *argv[]) {
                     dump_ptr->contatore_atomi++;
                     V(6, semid);
 
+                    P(8, semid);
+                    dump_ptr->alimetazioni++;
+                    V(8, semid);
+
                     close (file_pipe[1]); /*chiudi scrittura*/
                     sleep (1);
                     read (file_pipe[0], &num, sizeof (int));
@@ -105,7 +109,7 @@ int main(int argc, char *argv[]) {
                     /*TEST_ERROR*/
                     sprintf(args1[2], "%d", num);
                     if (execve("bin/atomo", args1, NULL) == -1) {
-                        perror("execve");
+                        perror("execve fail in alimentazione");
                         exit(EXIT_FAILURE);
                     }
                     exit (EXIT_FAILURE);
@@ -129,7 +133,7 @@ void gestore_segnale() {
 
     /* detach memoria condivisa dal processo*/
     if (shmdt(dump_ptr) == -1) {
-        perror("shmdt fail in Alimentazione");
+        perror("shmdt dump_ptr fail in Alimentazione");
         exit(EXIT_FAILURE);
     }
 
