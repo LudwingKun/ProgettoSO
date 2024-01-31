@@ -80,11 +80,16 @@ int main(int argc, char *argv[]) {
             atomi_alimentatore[i] = fork();
             switch (atomi_alimentatore[i]) {
                 case -1:
-                    perror ("fork");
+                    perror ("error fork in alimentazione");
+                    kill(getppid(), SIGTERM);
                     exit (EXIT_FAILURE);
                 case 0:
                     P(7, semid);
-                    aggiungi_elemento(pids_ptr->pids, &pids_ptr->dimensione, &pids_ptr->indice, getpid());
+                    /*aggiungi_elemento(pids_ptr->pids, &pids_ptr->dimensione, &pids_ptr->indice, getpid());*/
+                    if (aggiungi_elemento(pids_ptr->pids, &pids_ptr->dimensione, &pids_ptr->indice, getpid()) == -1) {
+                        V(7, semid);
+                        gestore_segnale();
+                    }
                     V(7, semid);
 
                     /*printf ("Atomo_Alimentatore_pid: %d\n", getpid());*/

@@ -95,7 +95,7 @@ int trova_pos(int array[], int *dimensione, pid_t pid) {
 
 int aggiungi_elemento(int *array, int *dimensione, int *posizione, pid_t pid) {
     if (*posizione + 1 == *dimensione) {
-        printf("Errore dimensione array: \n");
+        /*printf("Errore dimensione array: \n");*/
         return -1;
     }
     (array)[*posizione] = pid;

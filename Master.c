@@ -1,6 +1,12 @@
 #include "lib/MacroUtil.h"
 #include "lib/GeneralUtils.h"
 
+int shmidInit, semid, shmid_pids, msgid, shmid_dump;
+int *shmidInit_ptr;
+atomi *pids_ptr;
+dump *dump_ptr;
+int pid_attivatore;
+void rimozioneStrutture();
 
 int main() {
 
@@ -8,14 +14,13 @@ int main() {
     int i;
     int N_ATOMI_INIT, ENERGY_DEMAND, MIN_N_ATOMICO, N_NUOVI_ATOMI, N_ATOM_MAX, STEP_ALIMENTAZIONE,
             ENERGY_EXPLODE_THRESHOLD, SIM_DURATION, STEP_ATTIVATORE;
-    int pid_attivatore, pid_alimentazione;
+    int pid_alimentazione;
     int current_second, continua;
-    int shmidInit, semid, shmid_pids, msgid, shmid_dump;
-    int *shmidInit_ptr;
-    atomi *pids_ptr;
-    dump *dump_ptr;
     int config = 0;
     char *configuration;
+    struct sigaction sa;
+    sa.sa_handler = gestore_segnale;
+    sigaction(SIGTERM, &sa, NULL);
 
     int numero_atomico; /*num spedito dal padre*/
     int num; /*num letto dall'atomo*/
@@ -189,7 +194,7 @@ int main() {
 
     P(7, semid);
     pids_ptr->indice = 0;
-    pids_ptr->dimensione = 1000;
+    pids_ptr->dimensione = 10000;
     V(7, semid);
     /*************************************** FINE INIZIALIZZAZIONI *************************************************************/
 
@@ -295,7 +300,7 @@ int main() {
     continua = 1;
 
     while (current_second <= SIM_DURATION && continua) {
-        for (int t = 1; t < 6; t++)
+        for (int t = 1; t < 7; t++)
             P(t, semid);
 
         /*************************** STATISTICHE (al sec) **********************************************************/
@@ -341,7 +346,7 @@ int main() {
             continua = 0;
         }
 
-        for (int m = 1; m < 6; m++)
+        for (int m = 1; m < 7; m++)
             V(m, semid);
         if (continua > 0) {
             P(3, semid);
@@ -372,17 +377,17 @@ int main() {
         perror("Errore durante l'invio del segnale");
         return 1;
     }
-    /**************/
     P(7, semid);
     for (int k = 0; k < pids_ptr->indice; k++) {
         if (kill(pids_ptr->pids[k], SIGTERM) == 0) {
         } else {
             perror("Errore durante l'invio del segnale");
-            return 1;
         }
     }
     V(7, semid);
     printf("Atomi staccati dalla memoria condivisa: %d\n", pids_ptr->indice);
+    /**************/
+
     sleep(3);
 
 
@@ -405,6 +410,17 @@ int main() {
 
 
     /*------------------Rimozione dei semafori e della memoria condivisa---------------------------- */
+    rimozioneStrutture();
+
+
+    printf("\n||| ------------------------------------------------FINE SIMULAZIONE--------------------------------------------------------- |||\n");
+
+    exit(EXIT_SUCCESS);
+
+}
+
+
+void rimozioneStrutture() {
 
     /*detach memoria condivisa per array pid*/
     if (shmdt(pids_ptr) == -1) {
@@ -438,11 +454,32 @@ int main() {
     shmctl(shmid_pids, IPC_RMID, NULL);
     shmctl(shmidInit, IPC_RMID, NULL);
     msgctl(msgid, IPC_RMID, NULL);
-
-
-    printf("\n||| ------------------------------------------------FINE SIMULAZIONE--------------------------------------------------------- |||\n");
-
-    return 0;
-
-
 }
+
+
+void gestore_segnale() {
+
+    printf("CASO ERRORE FORK: MELTDOWN\n");
+
+    if (kill(pid_attivatore, SIGTERM) == 0) {
+        printf("Segnale di terminazione inviato al processo con PID %d\n", pid_attivatore);
+    } else {
+        perror("Errore durante l'invio del segnale");
+    }
+
+    printf("sono dentro gestore del master\n");
+
+    P(7, semid);
+    for (int k = 0; k < pids_ptr->indice; k++) {
+        if (kill(pids_ptr->pids[k], SIGTERM) == 0) {
+        } else {
+            perror("Errore durante l'invio del segnale");
+        }
+    }
+    V(7, semid);
+    printf("Atomi staccati dalla memoria condivisa: %d\n", pids_ptr->indice);
+
+    rimozioneStrutture();
+    exit(EXIT_FAILURE);
+}
+
