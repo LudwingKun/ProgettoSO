@@ -51,13 +51,6 @@ int main(int argc, char *argv[]) {
         perror("shmdt shmidInit_ptr in alimentazione");
         exit(EXIT_FAILURE);
     }
-/**Collegamento allla memoria condivisa per i pids**/
-    /*pids_ptr = (struct Atomi *) shmat(pids_id, NULL, 0);
-    if (pids_ptr == (void *) -1) {
-        perror("shmat Alimentazione puntatore pids");
-        return 1;
-    }*/
-
     /*Collega la memoria condivisa dump al puntatore*/
     dump_ptr = (struct Dump *) shmat(dump_id, NULL, 0);
     if ((struct Dump *) dump_ptr == (struct Dump *) (-1)) {
@@ -90,7 +83,6 @@ int main(int argc, char *argv[]) {
                     rimuovi_strutture();
                     kill(getppid(), SIGTERM);
                     exit(EXIT_FAILURE);
-                    break;
                 case 0:
 
                     /*printf ("Atomo_Alimentatore_pid: %d\n", getpid());*/
@@ -109,7 +101,7 @@ int main(int argc, char *argv[]) {
                     sprintf(args1[2], "%d", num);
 
                     /*TEST_ERROR*/
-                    if(errno){
+                    if(errno == EAGAIN){
                         exit(EXIT_FAILURE);
 
                     }
