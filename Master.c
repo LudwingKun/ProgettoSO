@@ -1,11 +1,12 @@
 #include "lib/MacroUtil.h"
 #include "lib/GeneralUtils.h"
 
-int shmidInit, semid, shmid_pids, msgid, shmid_dump;
+int shmidInit, semid, msgid, shmid_dump;
 int *shmidInit_ptr;
-atomi *pids_ptr;
 dump *dump_ptr;
 int pid_attivatore;
+int pid_alimentazione;
+
 void rimozioneStrutture();
 
 int main() {
@@ -14,7 +15,6 @@ int main() {
     int i;
     int N_ATOMI_INIT, ENERGY_DEMAND, MIN_N_ATOMICO, N_NUOVI_ATOMI, N_ATOM_MAX, STEP_ALIMENTAZIONE,
             ENERGY_EXPLODE_THRESHOLD, SIM_DURATION, STEP_ATTIVATORE;
-    int pid_alimentazione;
     int current_second, continua;
     int config = 0;
     char *configuration;
@@ -101,21 +101,20 @@ int main() {
         return 1;
     }
     /* Creazione MEMORIA CONDIVISA per array pid */
-    shmid_pids = shmget(IPC_PRIVATE, sizeof(atomi), IPC_CREAT | 0666);
+    /*hmid_pids = shmget(IPC_PRIVATE, sizeof(atomi), IPC_CREAT | 0666);
     if (shmid_pids == -1) {
         fprintf(stderr, "%s: %d. Errore in shmget for shmid_pids in master #%03d: %s\n", __FILE__, __LINE__, errno,
                 strerror(errno));
         exit(EXIT_FAILURE);
-    }
-    printf("....shmid_pids sono in MASTER: %d\n", shmid_pids);
+    }*/
 
     /* Collega la memoria condivisa al puntatore*/
-    pids_ptr = (atomi *) shmat(shmid_pids, NULL, 0);
+    /*pids_ptr = (atomi *) shmat(shmid_pids, NULL, 0);
     if (pids_ptr == (struct Atomi *) -1) {
         perror("shmat pids_ptr fail in master ");
         TEST_ERROR
         return 1;
-    }
+    }*/
 
     /* Creazione MEMORIA CONDIVISA per le statistiche ogni secondo, metto struttura DUMP! */
     shmid_dump = shmget(IPC_PRIVATE, sizeof(struct Dump), IPC_CREAT | 0666);
@@ -167,10 +166,10 @@ int main() {
     shmidInit_ptr[5] = STEP_ALIMENTAZIONE;
     shmidInit_ptr[6] = N_NUOVI_ATOMI;
     shmidInit_ptr[7] = N_ATOM_MAX;
-    shmidInit_ptr[8] = shmid_pids;
-    shmidInit_ptr[9] = shmid_dump;
-    shmidInit_ptr[10] = semid;
-    shmidInit_ptr[11] = msgid;
+
+    shmidInit_ptr[8] = shmid_dump;
+    shmidInit_ptr[9] = semid;
+    shmidInit_ptr[10] = msgid;
 
 
     if (sprintf((char *) args1[1], "%d", shmidInit) < 0) {
@@ -194,10 +193,7 @@ int main() {
     dump_ptr->contatore_atomi = 0;
     V(6, semid);
 
-    P(7, semid);
-    pids_ptr->indice = 0;
-    pids_ptr->dimensione = 100;
-    V(7, semid);
+
     /*************************************** FINE INIZIALIZZAZIONI *************************************************************/
 
     for (i = 0; i < N_ATOMI_INIT; i++) {
@@ -216,10 +212,10 @@ int main() {
                 dump_ptr->contatore_atomi++;
                 V(6, semid);
 
-   /*             P(7, semid);
-                pids_ptr->indice++;
-                pids_ptr->pids[i] = getpid();
-                V(7, semid);*/
+                /*             P(7, semid);
+                             pids_ptr->indice++;
+                             pids_ptr->pids[i] = getpid();
+                             V(7, semid);*/
 
                 /*ricezione numero atomico*/
                 close(file_pipe[1]); /*chiudi scrittura*/
@@ -333,7 +329,7 @@ int main() {
                dump_ptr->energia_prodotta,
                dump_ptr->energia_consumata,
                dump_ptr->scoria_prodotta,
-               pids_ptr->indice,
+               0,
                dump_ptr->contatore_atomi);
         printf("|-----------------|---------------|----------------------|-------------------------|------------|||--------------|--------------|\n");
         printf("\n");
@@ -389,7 +385,7 @@ int main() {
         }
     }
     V(7, semid);*/
-    printf("Atomi staccati dalla memoria condivisa: %d\n", pids_ptr->indice);
+
     /**************/
 
     sleep(5);
@@ -426,10 +422,10 @@ int main() {
 void rimozioneStrutture() {
 
     /*detach memoria condivisa per array pid*/
-    if (shmdt(pids_ptr) == -1) {
+    /*if (shmdt(pids_ptr) == -1) {
         perror("shmdt pids_ptr in master");
         exit(EXIT_FAILURE);
-    }
+    }*/
 
     /* detach memoria condivisa dal processo per dump */
     if (shmdt(dump_ptr) == -1) {
@@ -454,13 +450,13 @@ void rimozioneStrutture() {
         semctl(semid, n, IPC_RMID);
     }
 
-    shmctl(shmid_pids, IPC_RMID, NULL);
     shmctl(shmidInit, IPC_RMID, NULL);
     msgctl(msgid, IPC_RMID, NULL);
 }
 
 
 void gestore_segnale() {
+
 
     printf("CASO ERRORE FORK: MELTDOWN\n");
 
@@ -469,6 +465,19 @@ void gestore_segnale() {
     } else {
         perror("Errore durante l'invio del segnale terminazione attivatore in master per meltdown");
     }
+
+    sleep(5);
+
+
+/*if (kill(pid_alimentazione, SIGTERM) == 0) {
+        printf("Segnale di terminazione inviato al processo con PID %d\n", pid_alimentazione);
+    } else {
+        perror("Errore durante l'invio del segnale terminazione alimentazione in master per meltdown");
+    }*/
+
+
+
+
 
     printf("sono dentro gestore del master\n");
 
@@ -481,8 +490,10 @@ void gestore_segnale() {
 //    }
 //    V(7, semid);
 //    printf("Atomi staccati dalla memoria condivisa: %d\n", pids_ptr->indice);
-
+    TEST_ERROR
     rimozioneStrutture();
+    TEST_ERROR
+
     exit(EXIT_FAILURE);
 }
 

@@ -42,16 +42,15 @@ int main(int argc, char *argv[]) {
     }
     sprintf(buffer, "%d", shmidInit);
     MIN_N_ATOMICO = shmidInit_ptr[1];
-    msgid = shmidInit_ptr[11];
-    semid = shmidInit_ptr[10];
-    pids_id = shmidInit_ptr[8];
-    dump_id = shmidInit_ptr[9];
+    msgid = shmidInit_ptr[10];
+    semid = shmidInit_ptr[9];
+    dump_id = shmidInit_ptr[8];
 
-    pids_ptr = (atomi *) shmat(pids_id, NULL, 0);
+    /*pids_ptr = (atomi *) shmat(pids_id, NULL, 0);
     if ((int *) pids_ptr == (void *) (-1)) {
         perror("shmat pids_id fail in atomo");
         exit(EXIT_FAILURE);
-    }
+    }*/
     dump_ptr = (struct Dump *) shmat(dump_id, NULL, 0);
     if ((struct Dump *) dump_ptr == (struct Dump *) (-1)) {
         perror("shmat dump_id fail in atomo");
@@ -88,7 +87,7 @@ int main(int argc, char *argv[]) {
         if (num_bytes > 0) {
             /*printf("messaggio ricevuto per pid %d: %s\n\n", getpid(), myMessage.msg_text);*/
             if (numero_atomico <= MIN_N_ATOMICO) {
-           /*     printf("CHILD %d va in scorie e termina \n", getpid());*/
+                /*     printf("CHILD %d va in scorie e termina \n", getpid());*/
 
                 P(5, semid);
                 dump_ptr->scoria_prodotta++;
@@ -115,9 +114,9 @@ int main(int argc, char *argv[]) {
                 case 0:
                     lettura_pipe(fd, &num_figlio_r);
                     /**aggiornare DUMP**/
-               /*     P(7,semid);
-                    aggiungi_elemento(pids_ptr->pids, &pids_ptr->dimensione, &pids_ptr->indice , getpid());
-                    V(7,semid);*/
+                    /*     P(7,semid);
+                         aggiungi_elemento(pids_ptr->pids, &pids_ptr->dimensione, &pids_ptr->indice , getpid());
+                         V(7,semid);*/
 
                     P(2, semid);
                     dump_ptr->scissione++;
@@ -160,11 +159,12 @@ void rimuovi_strutture(){
 
 void gestore_segnale() {
     /*detach memoria condivisa per array pid*/
-  /*  if (shmdt(pids_ptr) == -1) {
-        perror("shmdt pids_ptr in atomo");
-        exit(EXIT_FAILURE);
-    }*/
+    /*  if (shmdt(pids_ptr) == -1) {
+          perror("shmdt pids_ptr in atomo");
+          exit(EXIT_FAILURE);
+      }*/
     rimuovi_strutture();
+    TEST_ERROR
     exit(EXIT_SUCCESS);
 }
 

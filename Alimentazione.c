@@ -21,6 +21,7 @@ int main(int argc, char *argv[]) {
     sa.sa_handler = gestore_segnale;
     sigaction(SIGTERM, &sa, NULL);
     struct timespec structtimespec;
+    int flag =1;
 
 
     if (argc != 2) {
@@ -41,9 +42,9 @@ int main(int argc, char *argv[]) {
     STEP_ALIMENTAZIONE = shmidInit_ptr[5];
     N_NUOVI_ATOMI = shmidInit_ptr[6];
     N_ATOM_MAX = shmidInit_ptr[7];
-    semid = shmidInit_ptr[10];
-    dump_id = shmidInit_ptr[9];
-    pids_id = shmidInit_ptr[8];
+    semid = shmidInit_ptr[9];
+    dump_id = shmidInit_ptr[8];
+
 
     /* detach memoria condivisa per init */
     if (shmdt(shmidInit_ptr) == -1) {
@@ -51,11 +52,11 @@ int main(int argc, char *argv[]) {
         exit(EXIT_FAILURE);
     }
 /**Collegamento allla memoria condivisa per i pids**/
-    pids_ptr = (struct Atomi *) shmat(pids_id, NULL, 0);
+    /*pids_ptr = (struct Atomi *) shmat(pids_id, NULL, 0);
     if (pids_ptr == (void *) -1) {
         perror("shmat Alimentazione puntatore pids");
         return 1;
-    }
+    }*/
 
     /*Collega la memoria condivisa dump al puntatore*/
     dump_ptr = (struct Dump *) shmat(dump_id, NULL, 0);
@@ -74,27 +75,23 @@ int main(int argc, char *argv[]) {
     structtimespec.tv_nsec = STEP_ALIMENTAZIONE;
     structtimespec.tv_sec = 0;
     nanosleep(&structtimespec, NULL);
-    while (1) {
+    while (flag) {
         for (i = 0; i < N_NUOVI_ATOMI; i++) {
             if (pipe(file_pipe) == -1) {
                 perror("fail in pipe alimentazione");
                 exit(EXIT_FAILURE);
             }
-            atomi_alimentatore[i] = fork();
-            switch (atomi_alimentatore[i]) {
+
+            switch (fork()) {
                 case -1:
+                    flag=0;
                     perror("error fork in alimentazione");
+                    TEST_ERROR
                     rimuovi_strutture();
                     kill(getppid(), SIGTERM);
                     exit(EXIT_FAILURE);
+                    break;
                 case 0:
-                    /* P(7, semid);
-                     *//*aggiungi_elemento(pids_ptr->pids, &pids_ptr->dimensione, &pids_ptr->indice, getpid());*//*
-                    if (aggiungi_elemento(pids_ptr->pids, &pids_ptr->dimensione, &pids_ptr->indice, getpid()) == -1) {
-                        V(7, semid);
-                        gestore_segnale();
-                    }
-                    V(7, semid);*/
 
                     /*printf ("Atomo_Alimentatore_pid: %d\n", getpid());*/
                     P(6, semid);
@@ -105,18 +102,27 @@ int main(int argc, char *argv[]) {
                     dump_ptr->alimetazioni++;
                     V(8, semid);
 
-                    close(file_pipe[1]); /*chiudi scrittura*/
-                    /*sleep (1);*/
+                    close(file_pipe[1]); /*chiudi scrittura */
                     read(file_pipe[0], &num, sizeof(int));
                     /*printf ("numero letto: %d per atomo con pid: %d\n", num, getpid());*/
                     close(file_pipe[0]);
-                    /*TEST_ERROR*/
                     sprintf(args1[2], "%d", num);
+
+                    /*TEST_ERROR*/
+                    if(errno){
+                        exit(EXIT_FAILURE);
+
+                    }
                     if (execve("bin/atomo", args1, NULL) == -1) {
                         perror("execve fail in alimentazione");
                         exit(EXIT_FAILURE);
                     }
+
+
+
+
                     exit(EXIT_FAILURE);
+                    break;
                 default:
                     /* PIPE -> atomo si mette in ascolto e attende il numero atomico che gli invia il padre */
                     close(file_pipe[0]);
@@ -142,6 +148,6 @@ void rimuovi_strutture() {
 void gestore_segnale() {
 
     rimuovi_strutture();
-
+    TEST_ERROR
     exit(EXIT_SUCCESS);
 }
