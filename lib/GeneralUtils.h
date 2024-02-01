@@ -117,13 +117,13 @@ typedef struct Dump{
 
 typedef struct message {
     long msg_type;
-    char msg_text[100];
+    int msg_text; /* 1 per scissione, 0 per morte*/
 } message;
 
 typedef struct Atomi{
     int indice;
     int dimensione;
-    int pids[10000];
+    int pids[100];
 }atomi;
 
 #endif

@@ -79,8 +79,9 @@ int main() {
            "Step Alimentazione : %d  nanosecondi\n"
            "Numero nuovi atomi creati da Alimentazione : %d\n"
            "Step Attivatore : %d secondi\n"
-           "Numero di attivazioni : %d \n\n", N_ATOMI_INIT, SIM_DURATION, STEP_ALIMENTAZIONE, N_NUOVI_ATOMI,
-           STEP_ATTIVATORE, 3);
+           "Numero di attivazioni : %d \n"
+           "Soglia di esplosione: %d \n\n", N_ATOMI_INIT, SIM_DURATION, STEP_ALIMENTAZIONE, N_NUOVI_ATOMI,
+           STEP_ATTIVATORE, 10, ENERGY_EXPLODE_THRESHOLD);
 
     /*************************************** CREAZIONE STRUTTURE *****************************************************/
 
@@ -195,7 +196,7 @@ int main() {
 
     P(7, semid);
     pids_ptr->indice = 0;
-    pids_ptr->dimensione = 10000;
+    pids_ptr->dimensione = 100;
     V(7, semid);
     /*************************************** FINE INIZIALIZZAZIONI *************************************************************/
 
@@ -215,10 +216,10 @@ int main() {
                 dump_ptr->contatore_atomi++;
                 V(6, semid);
 
-                P(7, semid);
+   /*             P(7, semid);
                 pids_ptr->indice++;
                 pids_ptr->pids[i] = getpid();
-                V(7, semid);
+                V(7, semid);*/
 
                 /*ricezione numero atomico*/
                 close(file_pipe[1]); /*chiudi scrittura*/
@@ -380,26 +381,25 @@ int main() {
         perror("Errore durante l'invio del segnale");
         return 1;
     }
-    P(7, semid);
+    /*P(7, semid);
     for (int k = 0; k < pids_ptr->indice; k++) {
         if (kill(pids_ptr->pids[k], SIGTERM) == 0) {
         } else {
             perror("Errore durante l'invio del segnale terminazione agli atomi");
         }
     }
-    V(7, semid);
+    V(7, semid);*/
     printf("Atomi staccati dalla memoria condivisa: %d\n", pids_ptr->indice);
     /**************/
 
-    sleep(3);
-
+    sleep(5);
 
     if (current_second > SIM_DURATION) {
         printf("La simulazione e' terminata perche' sono trascorsi %d secondi quindi per TIMEOUT\n", SIM_DURATION);
     } else if ((en_prod-en_cons) >= ENERGY_EXPLODE_THRESHOLD) {
         printf("La simulazione e' terminata per EXPLODE, l'energia liberata e' maggiore di %d\n",
                ENERGY_EXPLODE_THRESHOLD);
-        printf("Energia liberata: %d\n", (dump_ptr->energia_prodotta - dump_ptr->energia_consumata));
+        printf("Energia liberata: %d\n", (en_prod-en_cons));
     } else if (en_prod - en_cons < 0) {
         printf("dump_ptr->energia_prodotta - dump_ptr->energia_consumata =  %d\n",
                -en_cons + en_prod);
@@ -472,15 +472,15 @@ void gestore_segnale() {
 
     printf("sono dentro gestore del master\n");
 
-    P(7, semid);
-    for (int k = 0; k < pids_ptr->indice; k++) {
-        if (kill(pids_ptr->pids[k], SIGTERM) == 0) {
-        } else {
-            perror("Errore durante l'invio del segnale terminazione atomi in master per meltdown");
-        }
-    }
-    V(7, semid);
-    printf("Atomi staccati dalla memoria condivisa: %d\n", pids_ptr->indice);
+//    P(7, semid);
+//    for (int k = 0; k < pids_ptr->indice; k++) {
+//        if (kill(pids_ptr->pids[k], SIGTERM) == 0) {
+//        } else {
+//            perror("Errore durante l'invio del segnale terminazione atomi in master per meltdown");
+//        }
+//    }
+//    V(7, semid);
+//    printf("Atomi staccati dalla memoria condivisa: %d\n", pids_ptr->indice);
 
     rimozioneStrutture();
     exit(EXIT_FAILURE);

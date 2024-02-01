@@ -3,11 +3,11 @@
 
 struct Atomi *pids_ptr;
 struct Dump *dump_ptr;
-
-
+message myMessage;
+int msgid;
 int main(int argc, char *argv[]) {
-    int msgid, shmid, shmidReport,i=0;
-    message myMessage;
+
+    int shmid, shmidReport,i=0;
     int shmidInit, STEP_ATTIVATORE;
     int *shmidInit_ptr;
     int num_bytes;
@@ -63,24 +63,24 @@ int main(int argc, char *argv[]) {
 
     sem_wait_for_zero(semid);
 
-    /*sleep(STEP_ATTIVATORE);*/
+/*    sleep(STEP_ATTIVATORE);*/
     while(1) {
         i=0;
-        int casuali[10];
-        P(7, semid );
+        /*int casuali[10];*/
+    /*    P(7, semid );
         for(int k = 0; k < 10; k++ ){
             casuali[k] = random_btw(0, pids_ptr->indice);
-        }
+        }*/
         while (i < 10) {
-            myMessage.msg_type = pids_ptr->pids[casuali[i]];
-            num_bytes = sprintf(myMessage.msg_text, "scissione");
-            msgsnd(msgid, &myMessage, num_bytes, 0);
+            myMessage.msg_type = 1; /**messaggio dell'attivatore*/
+            myMessage.msg_text = 1;/**comando dell'attivatore**/
+            msgsnd(msgid, &myMessage, sizeof(int), 0);
             P(1, semid);
             dump_ptr->attivazione = dump_ptr->attivazione + 1;
             V(1, semid);
             i++;
         }
-        V(7, semid);
+/*        V(7, semid);*/
         sleep(STEP_ATTIVATORE);
     }
 
@@ -91,6 +91,9 @@ int main(int argc, char *argv[]) {
 
 void gestore_segnale() {
     /*detach memoria condivisa per array pid*/
+    myMessage.msg_type = 1;
+    myMessage.msg_text = 0;
+    msgsnd(msgid, &myMessage, sizeof(int), 0);
     if (shmdt(pids_ptr) == -1) {
         perror("shmdt puntatore pids fail in attivatore");
         exit(EXIT_FAILURE);

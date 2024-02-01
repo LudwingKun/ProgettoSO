@@ -68,7 +68,13 @@ int main(int argc, char *argv[]) {
 
     while (1) {
         num_bytes = 0;
-        num_bytes = msgrcv(msgid, &myMessage, 100, getpid(), 0); /*1 sarebbe il tipo del messaggio */
+        num_bytes = msgrcv(msgid, &myMessage, sizeof(int), 1, 0); /*1 sarebbe il tipo del messaggio */
+        if(myMessage.msg_text == 0){
+            myMessage.msg_text = 0;
+            myMessage.msg_type = 1;
+            msgsnd(msgid, &myMessage, sizeof(int), 0);
+            gestore_segnale();
+        }
         if (num_bytes < 0) {
             if (errno == ENOMSG) {
                 printf("CHILD %d: nessun messaggio di quel tipo", getpid());
@@ -90,10 +96,10 @@ int main(int argc, char *argv[]) {
 
 
 
-                P(7, semid);
+                /*P(7, semid);
                 pos = trova_pos(pids_ptr->pids, &pids_ptr->indice, getpid());
                 rimuovi_elemento(pids_ptr->pids, &pids_ptr->indice, pos);
-                V(7, semid);
+                V(7, semid);*/
 
                 gestore_segnale();
             }
@@ -109,9 +115,9 @@ int main(int argc, char *argv[]) {
                 case 0:
                     lettura_pipe(fd, &num_figlio_r);
                     /**aggiornare DUMP**/
-                    P(7,semid);
+               /*     P(7,semid);
                     aggiungi_elemento(pids_ptr->pids, &pids_ptr->dimensione, &pids_ptr->indice , getpid());
-                    V(7,semid);
+                    V(7,semid);*/
 
                     P(2, semid);
                     dump_ptr->scissione++;
@@ -131,7 +137,6 @@ int main(int argc, char *argv[]) {
                         exit(EXIT_FAILURE);
                     }
                     exit (EXIT_FAILURE);
-                    break;
                 default:
                     num_figlo_i = numero_atomico - numero_atomico / 2;
                     numero_atomico = numero_atomico - num_figlo_i;
@@ -146,18 +151,20 @@ int main(int argc, char *argv[]) {
 }
 
 
-void gestore_segnale() {
-    /*detach memoria condivisa per array pid*/
-    if (shmdt(pids_ptr) == -1) {
-        perror("shmdt pids_ptr in atomo");
-        exit(EXIT_FAILURE);
-    }
-
-    /* detach memoria condivisa dal processo*/
+void rimuovi_strutture(){
     if (shmdt(dump_ptr) == -1) {
         perror("shmdt dump_ptr in atomo");
         exit(EXIT_FAILURE);
     }
+}
+
+void gestore_segnale() {
+    /*detach memoria condivisa per array pid*/
+  /*  if (shmdt(pids_ptr) == -1) {
+        perror("shmdt pids_ptr in atomo");
+        exit(EXIT_FAILURE);
+    }*/
+    rimuovi_strutture();
     exit(EXIT_SUCCESS);
 }
 
