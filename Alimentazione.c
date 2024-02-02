@@ -1,27 +1,23 @@
 #include "lib/GeneralUtils.h"
 
-
 struct Dump *dump_ptr;
-atomi *pids_ptr;
 
-void rimuovi_strutture();
 
 int main(int argc, char *argv[]) {
     int i;
-    int atomi_alimentatore[10];
     int STEP_ALIMENTAZIONE, N_NUOVI_ATOMI, N_ATOM_MAX;
     char buffer[10];
     char buffer1[10];
-    int numero_atomico; /*num spedito dal padre*/
-    int num; /*num letto dall'atomo*/
+    int numero_atomico;
+    int num;
     int file_pipe[2];
-    int shmidInit, semid, dump_id, pids_id;
+    int shmidInit, semid, dump_id;
     int *shmidInit_ptr;
     struct sigaction sa;
     sa.sa_handler = gestore_segnale;
     sigaction(SIGTERM, &sa, NULL);
     struct timespec structtimespec;
-    int flag =1;
+    int flag = 1;
 
 
     if (argc != 2) {
@@ -32,11 +28,9 @@ int main(int argc, char *argv[]) {
     shmidInit = atoi(argv[1]);
     sprintf(buffer, "%d", shmidInit);
 
-    /*Collega la memoria condivisa Init al puntatore*/
     shmidInit_ptr = (int *) shmat(shmidInit, NULL, 0);
     if ((int *) shmidInit_ptr == (void *) (-1)) {
-        perror("shmat shmidInit fail in alimentazione");
-        exit(EXIT_FAILURE);
+        TEST_ERROR
     }
 
     STEP_ALIMENTAZIONE = shmidInit_ptr[5];
@@ -48,20 +42,16 @@ int main(int argc, char *argv[]) {
 
     /* detach memoria condivisa per init */
     if (shmdt(shmidInit_ptr) == -1) {
-        perror("shmdt shmidInit_ptr in alimentazione");
-        exit(EXIT_FAILURE);
+        TEST_ERROR
     }
     /*Collega la memoria condivisa dump al puntatore*/
     dump_ptr = (struct Dump *) shmat(dump_id, NULL, 0);
     if ((struct Dump *) dump_ptr == (struct Dump *) (-1)) {
-        perror("shmat dump_id fail in alimentazione");
-        exit(EXIT_FAILURE);
+        TEST_ERROR
     }
 
     char *args1[] = {"atomo", buffer, buffer1, NULL};
 
-    /*printf ("Sono dentro Alimentazione\n");
-    printf ("pid alimentazione! %d\n", getpid ());*/
 
     printf("Alimentazione waiting for zero\n");
     sem_wait_for_zero(semid);
@@ -77,33 +67,28 @@ int main(int argc, char *argv[]) {
 
             switch (fork()) {
                 case -1:
-                    flag=0;
-                    perror("error fork in alimentazione");
+                    flag = 0;
                     TEST_ERROR
-                    rimuovi_strutture();
+                    rimozioneStrutture();
                     kill(getppid(), SIGTERM);
                     exit(EXIT_FAILURE);
                 case 0:
 
-                    /*printf ("Atomo_Alimentatore_pid: %d\n", getpid());*/
                     P(6, semid);
                     dump_ptr->contatore_atomi++;
                     V(6, semid);
 
-                    P(8, semid);
+                    P(7, semid);
                     dump_ptr->alimetazioni++;
-                    V(8, semid);
+                    V(7, semid);
 
-                    close(file_pipe[1]); /*chiudi scrittura */
+                    close(file_pipe[1]);
                     read(file_pipe[0], &num, sizeof(int));
-                    /*printf ("numero letto: %d per atomo con pid: %d\n", num, getpid());*/
                     close(file_pipe[0]);
                     sprintf(args1[2], "%d", num);
 
-                    /*TEST_ERROR*/
-                    if(errno == EAGAIN){
+                    if (errno == EAGAIN) {
                         exit(EXIT_FAILURE);
-
                     }
                     if (execve("bin/atomo", args1, NULL) == -1) {
                         perror("execve fail in alimentazione");
@@ -111,15 +96,10 @@ int main(int argc, char *argv[]) {
                     }
 
 
-
-
                     exit(EXIT_FAILURE);
-                    break;
                 default:
-                    /* PIPE -> atomo si mette in ascolto e attende il numero atomico che gli invia il padre */
                     close(file_pipe[0]);
                     numero_atomico = random_btw(1, N_ATOM_MAX);
-                    /*printf ("PADRE ALIMENTAZIONE PRODUCE PER ALIMENTATORE: %d \n", numero_atomico);*/
                     write(file_pipe[1], &numero_atomico, sizeof(int));
                     break;
             }
@@ -129,17 +109,16 @@ int main(int argc, char *argv[]) {
     }
 }
 
-void rimuovi_strutture() {
+void rimozioneStrutture() {
     /* detach memoria condivisa dal processo*/
     if (shmdt(dump_ptr) == -1) {
-        perror("shmdt dump_ptr fail in Alimentazione");
-        exit(EXIT_FAILURE);
+        TEST_ERROR
     }
 }
 
 void gestore_segnale() {
 
-    rimuovi_strutture();
+    rimozioneStrutture();
     TEST_ERROR
     exit(EXIT_SUCCESS);
 }

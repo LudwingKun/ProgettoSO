@@ -26,12 +26,6 @@
  */
 void sem_init(int sem_id, int val, int n);
 
-/**
- * questa funzione incrementa il valore del semaforo
- *in caso di errore stampa un msg
- * @param sem_id
- */
-void sem_up(int sem_id);
 
 /**
  * questa funzione decrementa il valore del semaforo
@@ -61,9 +55,17 @@ void lettura_pipe(int fd[2], int *num);
  * @param num
  */
 void scrittura_pipe(int fd[2], int *num);
-
+/**
+ * la funzione fa un -1 sul semaforo n: n con semid
+ * @param n
+ * @param sem_id
+ */
 void P(int n, int sem_id);
-
+/**
+ * la funzione fa un +1 sul semaforo n: n con semid
+ * @param n
+ * @param sem_id
+ */
 void V(int n, int sem_id);
 
 /**
@@ -73,36 +75,27 @@ void V(int n, int sem_id);
  * @return numero intro random tra min e max inclusi
  */
 int random_btw(int min, int max);
-/**
- * la funzione rimuove, facendo uso di un semaforo, l'elemento
- * alla posizione indicata e riscala il vettore
- * @param array
- * @param dimensione
- * @param posizione
- */
-void rimuovi_elemento(int *array, int *dimensione, int posizione);
-/**
- * la funzione trova la posizione del pid corrispondente
- * @param array
- * @param dimensione
- * @param pid
- * @return posizione corrispondente
- */
-int trova_pos(int array[], int *dimensione, pid_t pid);
-/**
- * aggiunge il pid al vettore, raddoppiando la dimensione se necessario
- * @param array
- * @param dimensione
- * @param pid
- */
-int aggiungi_elemento(int *array, int *dimensione, int *posizione, pid_t pid);
 
+/**
+ * rimuove tutte le strutture di memoria condivisa
+ * in uso nella simulazione
+ */
+void rimozioneStrutture();
+
+/**
+ * gestisce il segnale di terminazione , SIGTERM
+ */
 void gestore_segnale();
-
+/**
+ * la funzione calcola l'energia liberata dopo la scissione
+ * @param n1 : numero atomico padre
+ * @param n2 : numero atomico figlio
+ * @return
+ */
 int energy(int n1, int n2);
 
 
-/*Dump per riportare le statistiche ogni secondo*/
+/**Dump per riportare le statistiche ogni secondo*/
 typedef struct Dump{
     int attivazione;
     int scissione;
@@ -113,17 +106,13 @@ typedef struct Dump{
     int alimetazioni;
 }dump;
 
-/*vediamo se serve anche quello totale*/
 
+/**struttura atta a contenere i messaggi sulla coda di messaggi
+ * 1 per scissione, 0 per morte in msg_text*/
 typedef struct message {
     long msg_type;
-    int msg_text; /* 1 per scissione, 0 per morte*/
+    int msg_text;
 } message;
 
-typedef struct Atomi{
-    int indice;
-    int dimensione;
-    int pids[100];
-}atomi;
 
 #endif

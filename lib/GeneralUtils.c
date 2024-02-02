@@ -4,15 +4,7 @@
 
 void sem_init(int sem_id, int val, int n) {
     if (semctl(sem_id, n, SETVAL, val) == -1) {
-        perror("semctl");
-        exit(EXIT_FAILURE);
-    }
-}
-
-void sem_up(int sem_id) {
-    struct sembuf sem_op = {0, 1, 0};
-    if (semop(sem_id, &sem_op, 1) == -1) {
-        perror("semop signal");
+        TEST_ERROR
         exit(EXIT_FAILURE);
     }
 }
@@ -50,13 +42,13 @@ void V(int n, int sem_id) {
 }
 
 void lettura_pipe(int fd[2], int *num) {
-    close(fd[1]); /*chiusura lato scrittura*/
+    close(fd[1]);
     read(fd[0], num, sizeof(int));
     close(fd[0]);
 }
 
 void scrittura_pipe(int fd[2], int *num) {
-    close(fd[0]); /*chiusrua lato lettura*/
+    close(fd[0]);
     write(fd[1], num, sizeof(int));
 
 }
@@ -66,51 +58,15 @@ int random_btw(int min, int max) {
     return rand() % (max - min + 1) + min;
 }
 
-void rimuovi_elemento(int *array, int *dimensione, int posizione) {
-    if (posizione < 0 || posizione > *dimensione) {
-        printf("Posizione non valida\n");
-        return;
-    }
-    for (int i = posizione; i < *dimensione; i++) {
-        array[i] = array[i + 1];
-    }
-    (*dimensione)--;
 
+int max(int n1, int n2) {
+    if (n1 > n2)
+        return n1;
+    else return n2;
 }
 
-
-int trova_pos(int array[], int *dimensione, pid_t pid) {
-    int res;
-    int i = 0;
-    int non_trovato = 1;
-    while (non_trovato && i < *dimensione) {
-        if (array[i] == pid) {
-            non_trovato = 0;
-            res = i;
-        }
-        i++;
-    }
-    return res;
-}
-
-int aggiungi_elemento(int *array, int *dimensione, int *posizione, pid_t pid) {
-    if (*posizione + 1 == *dimensione) {
-        /*printf("Errore dimensione array: \n");*/
-        return -1;
-    }
-    (array)[*posizione] = pid;
-    *posizione = *posizione + 1;
-    return 0;
-}
-
-int max(int n1, int n2){
-if(n1>n2)
-    return n1;
-else return n2;
-}
-
-int energy(int n1, int n2){
-    return n1*n2-max(n1,n2);
+int energy(int n1, int n2) {
+    return n1 * n2 - max(n1, n2);
 }
 
 

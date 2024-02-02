@@ -1,8 +1,7 @@
 #include "lib/MacroUtil.h"
 #include "lib/GeneralUtils.h"
 
-struct Dump *dump_ptr;
-atomi *pids_ptr;
+dump *dump_ptr;
 
 
 int main(int argc, char *argv[]) {
@@ -14,9 +13,7 @@ int main(int argc, char *argv[]) {
     int numero_atomico, num_figlo_i, num_figlio_r, shmidInit;
     int *shmidInit_ptr;
     int semid;
-    int pids_id;
     int dump_id;
-    int pos;
     struct sigaction sa;
     sa.sa_handler = gestore_segnale;
     sigaction(SIGTERM, &sa, NULL);
@@ -32,13 +29,10 @@ int main(int argc, char *argv[]) {
 
     shmidInit = atoi(argv[1]);
     numero_atomico = atoi(argv[2]);
-/*    printf("numero atomico dell'atomo %d e' ==== %d\n", getpid(), numero_atomico);*/
 
-    /*Collega la memoria condivisa Init al puntatore*/
     shmidInit_ptr = (int *) shmat(shmidInit, NULL, 0);
     if ((int *) shmidInit_ptr == (void *) (-1)) {
-        perror("shmat shmidInit fail in atomo");
-        exit(EXIT_FAILURE);
+        TEST_ERROR
     }
     sprintf(buffer, "%d", shmidInit);
     MIN_N_ATOMICO = shmidInit_ptr[1];
@@ -46,20 +40,14 @@ int main(int argc, char *argv[]) {
     semid = shmidInit_ptr[9];
     dump_id = shmidInit_ptr[8];
 
-    /*pids_ptr = (atomi *) shmat(pids_id, NULL, 0);
-    if ((int *) pids_ptr == (void *) (-1)) {
-        perror("shmat pids_id fail in atomo");
-        exit(EXIT_FAILURE);
-    }*/
+
     dump_ptr = (struct Dump *) shmat(dump_id, NULL, 0);
     if ((struct Dump *) dump_ptr == (struct Dump *) (-1)) {
-        perror("shmat dump_id fail in atomo");
-        exit(EXIT_FAILURE);
+        TEST_ERROR
     }
     /* detach memoria condivisa per array pid*/
     if (shmdt(shmidInit_ptr) == -1) {
-        perror("shmdt shmidInit_ptr fail in atomo");
-        exit(EXIT_FAILURE);
+        TEST_ERROR
     }
     myMessage.msg_text = 1;
 
@@ -67,7 +55,7 @@ int main(int argc, char *argv[]) {
 
     while (1) {
         num_bytes = 0;
-        num_bytes = msgrcv(msgid, &myMessage, sizeof(int), 1, 0); /*1 sarebbe il tipo del messaggio */
+        num_bytes = msgrcv(msgid, &myMessage, sizeof(int), 1, 0);
         if (num_bytes < 0) {
             if (errno == ENOMSG) {
                 printf("CHILD %d: nessun messaggio di quel tipo", getpid());
@@ -85,9 +73,7 @@ int main(int argc, char *argv[]) {
                 msgsnd(msgid, &myMessage, sizeof(int), 0);
                 gestore_segnale();
             }
-            /*printf("messaggio ricevuto per pid %d: %s\n\n", getpid(), myMessage.msg_text);*/
             if (numero_atomico <= MIN_N_ATOMICO) {
-                /*     printf("CHILD %d va in scorie e termina \n", getpid());*/
 
                 P(5, semid);
                 dump_ptr->scoria_prodotta++;
@@ -97,7 +83,6 @@ int main(int argc, char *argv[]) {
             }
 
             if (pipe(fd) == -1) {
-                perror("fail in pipe in atomo");
                 TEST_ERROR
                 exit(EXIT_FAILURE);
             }
@@ -107,7 +92,6 @@ int main(int argc, char *argv[]) {
                     exit(EXIT_FAILURE);
                 case 0:
                     lettura_pipe(fd, &num_figlio_r);
-                    /**aggiornare DUMP**/
 
                     P(2, semid);
                     dump_ptr->scissione++;
@@ -141,7 +125,7 @@ int main(int argc, char *argv[]) {
 }
 
 
-void rimuovi_strutture() {
+void rimozioneStrutture() {
     if (shmdt(dump_ptr) == -1) {
         perror("shmdt dump_ptr in atomo");
         exit(EXIT_FAILURE);
@@ -149,7 +133,7 @@ void rimuovi_strutture() {
 }
 
 void gestore_segnale() {
-    rimuovi_strutture();
+    rimozioneStrutture();
     TEST_ERROR
     exit(EXIT_SUCCESS);
 }
