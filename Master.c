@@ -450,8 +450,11 @@ void rimozioneStrutture() {
         semctl(semid, n, IPC_RMID);
     }
 
-    shmctl(shmidInit, IPC_RMID, NULL);
-    msgctl(msgid, IPC_RMID, NULL);
+    if(shmctl(shmidInit, IPC_RMID, NULL)==-1){
+        TEST_ERROR
+    }
+    if(msgctl(msgid, IPC_RMID, NULL) == -1)
+        TEST_ERROR
 }
 
 
@@ -468,32 +471,9 @@ void gestore_segnale() {
 
     sleep(5);
 
-
-/*if (kill(pid_alimentazione, SIGTERM) == 0) {
-        printf("Segnale di terminazione inviato al processo con PID %d\n", pid_alimentazione);
-    } else {
-        perror("Errore durante l'invio del segnale terminazione alimentazione in master per meltdown");
-    }*/
-
-
-
-
-
     printf("sono dentro gestore del master\n");
-
-//    P(7, semid);
-//    for (int k = 0; k < pids_ptr->indice; k++) {
-//        if (kill(pids_ptr->pids[k], SIGTERM) == 0) {
-//        } else {
-//            perror("Errore durante l'invio del segnale terminazione atomi in master per meltdown");
-//        }
-//    }
-//    V(7, semid);
-//    printf("Atomi staccati dalla memoria condivisa: %d\n", pids_ptr->indice);
-    TEST_ERROR
     rimozioneStrutture();
-    TEST_ERROR
 
-    exit(EXIT_FAILURE);
+    exit(0);
 }
 
